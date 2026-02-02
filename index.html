@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>NBA Hub – Scores, Classements, Équipes & Joueurs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0f172a;        /* slate-900 */
+      --panel:#111827;     /* gray-900 */
+      --muted:#cbd5e1;     /* slate-300 */
+      --text:#e5e7eb;      /* gray-200 */
+      --accent:#60a5fa;    /* blue-400 */
+      --accent-2:#22c55e;  /* green-500 */
+      --lose:#ef4444;      /* red-500 */
+      --win:#22c55e;       /* green-500 */
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,"Noto Sans",sans-serif;
+    }
+    header{
+      padding:16px 24px; background:#0b1220; border-bottom:1px solid #1f2937;
+      position:sticky; top:0; z-index:10;
+    }
+    h1{margin:0; font-size:20px; letter-spacing:.2px;}
+    .sub{color:var(--muted); font-size:13px}
+    nav{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px}
+    .tab{
+      border:1px solid #243244; background:#0b1322; color:var(--muted);
+      padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:600; font-size:14px;
+    }
+    .tab.active{background:var(--accent); border-color:var(--accent); color:#001027}
+    main{max-width:1100px; margin:0 auto; padding:24px;}
+    .panel{
+      background:var(--panel); border:1px solid #1f2937; border-radius:12px; padding:16px; margin:16px 0;
+    }
+    .row{display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom:1px solid #1f2937}
+    .row:last-child{border-bottom:none}
+    .teams-grid{
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px;
+    }
+    .team-card{
+      background:#0c1526; border:1px solid #1f2937; border-radius:10px; padding:12px;
+    }
+    .muted{color:var(--muted)}
+    .badge{
+      display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px;
+      border:1px solid #22304a; background:#0c1627; color:var(--muted)
+    }
+    .score{font-weight:800; letter-spacing:.5px}
+    .status{font-size:12px; color:var(--muted)}
+    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+    .controls{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+    input, select{
+      background:#0c1526; color:var(--text); border:1px solid #243244; border-radius:8px;
+      padding:8px 10px; outline:none
+    }
+    button{
+      background:var(--accent); color:#001027; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:700
+    }
+    .table{
+      width:100%; border-collapse:collapse; font-size:14px;
+    }
+    .table th,.table td{padding:10px 8px; border-bottom:1px solid #1f2937; text-align:left}
+    .table th{color:var(--muted); font-weight:600}
+    .right{text-align:right}
+    .win{color:var(--win)} .lose{color:var(--lose)}
+    .spinner{padding:24px; text-align:center; color:var(--muted)}
+    @media (max-width:720px){ .grid2{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>NBA Hub <span class="sub">– Scores, Classements, Équipes & Joueurs</span></h1>
+    <nav>
+      <button class="tab active" data-tab="scores">Scores du jour</button>
+      <button class="tab" data-tab="standings">Classements</button>
+      <button class="tab" data-tab="teams">Équipes</button>
+      <button class="tab" data-tab="players">Joueurs</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- SCORES -->
+    <section id="scores" class="panel">
+      <div class="controls">
+        <label>Date : <input type="date" id="score-date"/></label>
+        <button id="btn-load-scores">Charger</button>
+        <span class="status" id="scores-status"></span>
+      </div>
+      <div id="scores-list"></div>
+    </section>
+
+    <!-- STANDINGS -->
+    <section id="standings" class="panel" style="display:none">
+      <div class="controls">
+        <label>Saison (année de début) :
+          <select id="season-select"></select>
+        </label>
+        <button id="btn-load-standings">Recalculer</button>
+        <span class="status" id="standings-status"></span>
+      </div>
+      <div class="grid2">
+        <div>
+          <h3>Conférence Est</h3>
+          <table class="table" id="east-table">
+            <thead><tr><th>#</th><th>Équipe</th><th class="right">V</th><th class="right">D</th><th class="right">%</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div>
+          <h3>Conférence Ouest</h3>
+          <table class="table" id="west-table">
+            <thead><tr><th>#</th><th>Équipe</th><th class="right">V</th><th class="right">D</th><th class="right">%</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TEAMS -->
+    <section id="teams" class="panel" style="display:none">
+      <div class="controls">
+        <button id="btn-load-teams">Charger les équipes</button>
+        <span class="status" id="teams-status"></span>
+      </div>
+      <div class="teams-grid" id="teams-grid"></div>
+    </section>
+
+    <!-- PLAYERS -->
+    <section id="players" class="panel" style="display:none">
+      <div class="controls">
+        <input type="text" id="player-q" placeholder="Rechercher un joueur (ex: LeBron James)" />
+        <button id="btn-search-players">Rechercher</button>
+        <span class="status" id="players-status"></span>
+      </div>
+      <div id="players-list"></div>
+    </section>
+  </main>
+
+  <script>
+    /***************
+     * CONFIG
+     ***************/
+    const API_BASE = "https://api.balldontlie.io/v1"; // Endpoints publics: /teams, /players, /games (voir docs) 
+    const API_KEY = ""; // Optionnel. Si tu as une clé, mets-la ici (sinon, laisse vide). 
+    const FETCH_OPTS = API_KEY ? { headers: { "Authorization": API_KEY } } : {};
+
+    /***************
+     * HELPERS
+     ***************/
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+    function fmtPct(w, l){ const t = w + l; return t ? (w/t).toFixed(3).slice(1) : ".000"; }
+    function byWinPctDesc(a,b){ return b.winPct - a.winPct || (b.w - a.w) || (a.l - b.l) || a.team.full_name.localeCompare(b.team.full_name); }
+    function setLoading(el, loading, msg=""){ el.textContent = loading ? msg || "Chargement..." : ""; el.parentElement && (el.parentElement.style.opacity = loading ? .9 : 1); }
+
+    async function getJson(url){
+      const res = await fetch(url, FETCH_OPTS);
+      if(!res.ok) throw new Error(`Erreur API (${res.status})`);
+      return res.json();
+    }
+
+    // Récupère toutes les pages d'un endpoint paginé BallDontLie
+    async function getAllPages(url){
+      let page = 1, out = [], totalPages = 1;
+      do{
+        const sep = url.includes("?") ? "&" : "?";
+        const data = await getJson(`${url}${sep}per_page=100&page=${page}`);
+        out = out.concat(data.data);
+        totalPages = data.meta?.total_pages || 1;
+        page++;
+      } while(page <= totalPages);
+      return out;
+    }
+
+    function todayISO(){ return new Date().toISOString().slice(0,10); }
+
+    /***************
+     * TABS
+     ***************/
+    $$(".tab").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        $$(".tab").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        const tab = btn.dataset.tab;
+        ["scores","standings","teams","players"].forEach(id=>{
+          document.getElementById(id).style.display = id===tab ? "" : "none";
+        });
+      });
+    });
+
+    /***************
+     * SCORES
+     ***************/
+    const scoreDate = $("#score-date");
+    scoreDate.value = todayISO();
+
+    async function loadScores(){
+      const date = scoreDate.value || todayISO();
+      const status = $("#scores-status");
+      const list = $("#scores-list");
+      list.innerHTML = "";
+      setLoading(status, true, "Chargement des matchs...");
+      try{
+        // Endpoint : /games?dates[]=YYYY-MM-DD
+        const url = `${API_BASE}/games?dates[]=${date}`;
+        const json = await getJson(url);
+        const games = json.data;
+        if(games.length === 0){
+          list.innerHTML = `<div class="spinner">Aucun match pour la date ${date}.</div>`;
+          setLoading(status,false); return;
+        }
+        list.innerHTML = games.map(g=>{
+          const home = g.home_team, away = g.visitor_team;
+          const h = g.home_team_score, a = g.visitor_team_score;
+          const homeWin = h > a;
+          const statusTxt = g.status || "";
+          return `
+            <div class="row">
+              <div>
+                <div><span class="badge">${g.season}</span> <span class="status">${statusTxt}</span></div>
+                <div class="muted">${away.full_name} @ ${home.full_name}</div>
+              </div>
+              <div class="score">
+                <span class="${homeWin?'lose':'win'}">${away.abbreviation} ${a}</span>
+                –
+                <span class="${homeWin?'win':'lose'}">${home.abbreviation} ${h}</span>
+              </div>
+            </div>
+          `;
+        }).join("");
+      } catch(e){
+        list.innerHTML = `<div class="spinner">Erreur : ${e.message}</div>`;
+      } finally{
+        setLoading(status,false);
+      }
+    }
+    $("#btn-load-scores").addEventListener("click", loadScores);
+    loadScores();
+
+    /***************
+     * STANDINGS (recalculés à partir des matchs)
+     * Principe : on parcourt tous les matchs de la saison (saison = année de début, ex: 2025 pour 2025‑26),
+     * et on calcule V/D pour chaque équipe selon les scores.
+     * (Approche semblable aux exemples communautaires qui reconstruisent les standings avec BallDontLie.)
+     ***************/
+    const seasonSelect = $("#season-select");
+    (function initSeasons(){
+      const currentYear = new Date().getMonth() >= 9 ? new Date().getFullYear() : new Date().getFullYear() - 1;
+      // on remplit quelques saisons récentes
+      const years = [];
+      for(let y=currentYear; y>=2018; y--) years.push(y);
+      seasonSelect.innerHTML = years.map(y=>`<option value="${y}">${y}-${String(y+1).slice(-2)}</option>`).join("");
+    })();
+
+    async function loadStandings(){
+      const season = Number(seasonSelect.value);
+      const status = $("#standings-status");
+      const eastBody = $("#east-table tbody");
+      const westBody = $("#west-table tbody");
+      eastBody.innerHTML = westBody.innerHTML = "";
+      setLoading(status, true, `Récupération des matchs de la saison ${season}-${String(season+1).slice(-2)}...`);
+      try{
+        // 1) Récupérer les équipes (pour nom/conférence)
+        const teams = (await getJson(`${API_BASE}/teams`)).data;
+        const byId = Object.fromEntries(teams.map(t=>[t.id, {team:t, w:0, l:0}]));
+
+        // 2) Récupérer tous les matchs de la saison (saison régulière uniquement)
+        //    Endpoint : /games?seasons[]=YYYY&postseason=false (paginations gérées)
+        const games = await getAllPages(`${API_BASE}/games?seasons[]=${season}&postseason=false`);
+
+        // 3) Comptabiliser V/D
+        for(const g of games){
+          const home = byId[g.home_team.id];
+          const away = byId[g.visitor_team.id];
+          // On ne compte que les matchs terminés avec des scores valides
+          if(typeof g.home_team_score === "number" && typeof g.visitor_team_score === "number"){
+            if(g.home_team_score > g.visitor_team_score){ home.w++; away.l++; }
+            else if(g.home_team_score < g.visitor_team_score){ away.w++; home.l++; }
+          }
+        }
+
+        // 4) Construire les listes Est / Ouest
+        const east = [], west = [];
+        for(const id in byId){
+          const o = byId[id];
+          const w = o.w, l = o.l, team = o.team;
+          const winPct = (w + l) ? (w/(w+l)) : 0;
+          const row = {team, w, l, winPct};
+          (team.conference === "East" ? east : west).push(row);
+        }
+        east.sort(byWinPctDesc); west.sort(byWinPctDesc);
+
+        function renderTable(arr, tbody){
+          tbody.innerHTML = arr.map((r,i)=>`
+            <tr>
+              <td>${i+1}</td>
+              <td>${r.team.full_name} <span class="badge">${r.team.abbreviation}</span></td>
+              <td class="right">${r.w}</td>
+              <td class="right">${r.l}</td>
+              <td class="right">${fmtPct(r.w, r.l)}</td>
+            </tr>
+          `).join("");
+        }
+        renderTable(east, eastBody);
+        renderTable(west, westBody);
+      } catch(e){
+        eastBody.innerHTML = westBody.innerHTML = `<tr><td colspan="5" class="muted">Erreur : ${e.message}</td></tr>`;
+      } finally{
+        setLoading(status,false);
+      }
+    }
+    $("#btn-load-standings").addEventListener("click", loadStandings);
+
+    /***************
+     * TEAMS
+     ***************/
+    async function loadTeams(){
+      const grid = $("#teams-grid");
+      const status = $("#teams-status");
+      grid.innerHTML = "";
+      setLoading(status, true, "Chargement des équipes...");
+      try{
+        const teams = (await getJson(`${API_BASE}/teams`)).data;
+        grid.innerHTML = teams.map(t=>`
+          <div class="team-card">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <strong>${t.full_name}</strong>
+              <span class="badge">${t.abbreviation}</span>
+            </div>
+            <div class="muted">${t.city} • ${t.division} • ${t.conference}</div>
+          </div>
+        `).join("");
+      } catch(e){
+        grid.innerHTML = `<div class="spinner">Erreur : ${e.message}</div>`;
+      } finally{
+        setLoading(status,false);
+      }
+    }
+    $("#btn-load-teams").addEventListener("click", loadTeams);
+
+    /***************
+     * PLAYERS (recherche)
+     ***************/
+    async function searchPlayers(){
+      const q = $("#player-q").value.trim();
+      const list = $("#players-list");
+      const status = $("#players-status");
+      list.innerHTML = "";
+      if(!q){ list.innerHTML = `<div class="spinner">Saisis un nom de joueur.</div>`; return; }
+      setLoading(status, true, "Recherche en cours...");
+      try{
+        // Endpoint : /players?search=LeBron%20James
+        const players = (await getAllPages(`${API_BASE}/players?search=${encodeURIComponent(q)}`));
+        if(players.length === 0){
+          list.innerHTML = `<div class="spinner">Aucun joueur trouvé pour “${q}”.</div>`;
+          return;
+        }
+        list.innerHTML = players.map(p=>`
+          <div class="row">
+            <div>
+              <strong>${p.first_name} ${p.last_name}</strong>
+              <div class="muted">Équipe : ${p.team?.full_name || "—"} • Poste : ${p.position || "—"}</div>
+            </div>
+            <div class="badge">ID ${p.id}</div>
+          </div>
+        `).join("");
+      } catch(e){
+        list.innerHTML = `<div class="spinner">Erreur : ${e.message}</div>`;
+      } finally{
+        setLoading(status,false);
+      }
+    }
+    $("#btn-search-players").addEventListener("click", searchPlayers);
+
+    /***************
+     * INIT QUALITÉ DE VIE
+     ***************/
+    // Charger les équipes au premier affichage de l'onglet
+    let teamsLoaded = false;
+    document.querySelector('[data-tab="teams"]').addEventListener("click", ()=>{
+      if(!teamsLoaded){ teamsLoaded = true; loadTeams(); }
+    });
+    // Pré-charger les standings pour la saison courante quand on clique l'onglet
+    let standingsLoaded = false;
+    document.querySelector('[data-tab="standings"]').addEventListener("click", ()=>{
+      if(!standingsLoaded){ standingsLoaded = true; loadStandings(); }
+    });
+  </script>
+</body>
+</html>
+``
