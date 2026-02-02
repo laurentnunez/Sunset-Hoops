@@ -1,0 +1,6 @@
+
+.day-btn.active {
+  outline: 2px solid var(--highlight);
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.2) inset;
+}
+
