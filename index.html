@@ -9,12 +9,22 @@
     :root{
       --bg:#0f0d14;
       --panel:#1a1720;
-      --muted:#dcd5e0;
+
+      /* Couleurs Phoenix Suns (sources officielles) */
+      --sun-purple:#1D1160;   /* Purple [1](https://rapidapi.com/Creativesdev/api/nba-api-free-data) */
+      --sun-orange:#E56020;   /* Orange [1](https://rapidapi.com/Creativesdev/api/nba-api-free-data) */
+      --sun-yellow:#F9A01B;   /* Yellow [2](http://nbasense.com/nba-api/) */
+      --sun-dark-orange:#B95915; /* Dark orange [2](http://nbasense.com/nba-api/) */
+      --sun-gray:#63727A;     /* Gray [2](http://nbasense.com/nba-api/) */
+      --sun-light-gray:#BEC0C2; /* Light gray [2](http://nbasense.com/nba-api/) */
       --text:#f8f6fa;
-      --accent:#f4a261;
-      --accent-2:#e76f51;
-      --lose:#e63946;
+      --muted:#dcd5e0;
+
+      /* UI */
+      --accent:var(--sun-orange);
+      --accent-2:var(--sun-purple);
       --win:#2a9d8f;
+      --lose:#e63946;
     }
 
     *{box-sizing:border-box;margin:0;padding:0;}
@@ -24,14 +34,14 @@
       color:var(--text);
       font-family:system-ui,sans-serif;
       line-height:1.5;
-      padding:12px;
+      padding:14px;
     }
 
     /***************
-      HEADER SUNSET
+      HEADER
     ***************/
     .sunset-header {
-      padding: 16px 0;
+      padding: 16px 0 20px 0;
       display:flex;
       flex-direction:column;
       gap:14px;
@@ -41,37 +51,37 @@
     .header-left{
       display:flex;
       align-items:center;
-      gap:12px;
+      gap:14px;
     }
 
     .logo{
-      width:56px;
-      height:56px;
+      width:64px;
+      height:64px;
     }
 
     .title-block h1{
-      font-size:1.6rem;
-      font-weight:800;
-      background:linear-gradient(90deg,var(--accent),var(--accent-2));
+      font-size:1.7rem;
+      font-weight:900;
+      background:linear-gradient(90deg,var(--sun-orange),var(--sun-yellow));
       -webkit-background-clip:text;
       color:transparent;
     }
 
     .title-block .sub{
-      font-size:0.85rem;
+      font-size:0.9rem;
       color:var(--muted);
-      margin-top:-4px;
+      margin-top:-2px;
     }
 
     nav{
       display:flex;
       flex-wrap:wrap;
-      gap:6px;
+      gap:8px;
     }
 
     .tab{
       background:var(--panel);
-      border:1px solid #2b2533;
+      border:1px solid #352b45;
       padding:8px 12px;
       border-radius:8px;
       cursor:pointer;
@@ -80,21 +90,21 @@
     }
 
     .tab.active{
-      background:var(--accent);
-      border-color:var(--accent);
-      color:#2c1a0c;
+      background:var(--sun-orange);
+      border-color:var(--sun-orange);
+      color:#2b1405;
     }
 
     /***************
        PANELS
     ***************/
     main{
-      margin-top:16px;
+      margin-top:18px;
     }
 
     .panel{
       background:var(--panel);
-      border:1px solid #2b2533;
+      border:1px solid #352b45;
       padding:16px;
       border-radius:12px;
       margin-bottom:20px;
@@ -103,22 +113,22 @@
     .controls{
       display:flex;
       flex-wrap:wrap;
-      gap:8px;
+      gap:10px;
       align-items:center;
       margin-bottom:12px;
     }
 
     input, select{
       background:#16131c;
-      border:1px solid #2b2533;
+      border:1px solid #352b45;
       color:var(--text);
       padding:8px;
       border-radius:8px;
     }
 
     button{
-      background:var(--accent);
-      color:#2c1a0c;
+      background:var(--sun-orange);
+      color:#2b1405;
       border:none;
       padding:8px 14px;
       border-radius:8px;
@@ -130,7 +140,7 @@
       display:flex;
       justify-content:space-between;
       padding:10px 0;
-      border-bottom:1px solid #2b2533;
+      border-bottom:1px solid #352b45;
     }
     .row:last-child{border-bottom:none;}
 
@@ -152,7 +162,7 @@
 
     .table th,.table td{
       padding:10px 5px;
-      border-bottom:1px solid #2b2533;
+      border-bottom:1px solid #352b45;
     }
 
     .right{text-align:right;}
@@ -165,7 +175,7 @@
 
     .team-card{
       background:#16131c;
-      border:1px solid #2b2533;
+      border:1px solid #352b45;
       border-radius:10px;
       padding:10px;
     }
@@ -188,7 +198,7 @@
   <!-- HEADER -->
   <header class="sunset-header">
     <div class="header-left">
-      <img src="logo.png" class="logo" alt="Logo Sunset Hoops">
+      <img src="logo.png" class="logo" alt="Logo Sunset Hoops" />
       <div class="title-block">
         <h1>Sunset Hoops</h1>
         <p class="sub">Scores, Classements, Équipes & Joueurs</p>
@@ -267,10 +277,10 @@
   </main>
 
 
-  <!-- JAVASCRIPT LOGIQUE -->
+  <!-- JAVASCRIPT -->
   <script>
-    const API_BASE = "https://api.balldontlie.io/v1"; 
-    const API_KEY = ""; 
+    const API_BASE = "https://api.balldontlie.io/v1";
+    const API_KEY = "";
     const FETCH_OPTS = {
       method: "GET",
       mode: "cors",
@@ -285,6 +295,7 @@
     const $$ = (s)=>Array.from(document.querySelectorAll(s));
 
     function todayISO(){ return new Date().toISOString().slice(0,10); }
+    $("#score-date").value = todayISO();
 
     async function getJson(url){
       const res = await fetch(url, FETCH_OPTS);
@@ -298,9 +309,9 @@
       return todayISO();
     }
 
-    /*******************
+    /***************
       TABS
-    *******************/
+    ***************/
     $$(".tab").forEach(btn=>{
       btn.addEventListener("click", ()=>{
         $$(".tab").forEach(b=>b.classList.remove("active"));
@@ -311,11 +322,9 @@
       });
     });
 
-    /*******************
-      SCORES
-    *******************/
-    $("#score-date").value = todayISO();
-
+    /***************
+      LOAD SCORES
+    ***************/
     async function loadScores(){
       const date = toISODate($("#score-date").value);
       const list = $("#scores-list");
@@ -333,8 +342,7 @@
           return;
         }
 
-        list.innerHTML = games.map(g=>{
-          return `
+        list.innerHTML = games.map(g=>`
           <div class="row">
             <div>
               <div><span class="badge">${g.season}</span></div>
@@ -344,8 +352,8 @@
               ${g.visitor_team.abbreviation} ${g.visitor_team_score} –
               ${g.home_team.abbreviation} ${g.home_team_score}
             </div>
-          </div>`;
-        }).join("");
+          </div>
+        `).join("");
 
       }catch(e){
         list.innerHTML = `<div>Erreur : ${e.message}</div>`;
@@ -356,13 +364,13 @@
     $("#btn-load-scores").addEventListener("click", loadScores);
     loadScores();
 
-    /*******************
+    /***************
       STANDINGS
-    *******************/
+    ***************/
     const seasonSelect = $("#season-select");
     (function initSeasons(){
       const y = new Date().getFullYear();
-      const years = [y, y-1, y-2, y-3, y-4];
+      const years = [y, y-1, y-2, y-3];
       seasonSelect.innerHTML = years.map(yy=>`<option value="${yy}">${yy}</option>`).join("");
     })();
 
@@ -377,24 +385,23 @@
 
       try{
         const teams = (await getJson(`${API_BASE}/teams`)).data;
-        const byId = Object.fromEntries(teams.map(t=>[t.id, {team:t,w:0,l:0}]));
+        const byId = Object.fromEntries(teams.map(t=>[t.id,{team:t,w:0,l:0}]));
 
         async function getAllPages(url){
-          let page=1, out=[], totalPages=1;
+          let page=1,out=[],total=1;
           do{
-            const data = await getJson(url+`&per_page=100&page=${page}`);
-            out = out.concat(data.data);
-            totalPages = data.meta.total_pages;
+            const data=await getJson(url+`&per_page=100&page=${page}`);
+            out=out.concat(data.data);
+            total=data.meta.total_pages;
             page++;
-          }while(page<=totalPages);
+          }while(page<=total);
           return out;
         }
 
         const games = await getAllPages(`${API_BASE}/games?seasons[]=${season}&postseason=false`);
 
         for(const g of games){
-          const h = byId[g.home_team.id];
-          const a = byId[g.visitor_team.id];
+          const h=byId[g.home_team.id], a=byId[g.visitor_team.id];
           if(typeof g.home_team_score==="number"){
             if(g.home_team_score > g.visitor_team_score){h.w++;a.l++;}
             else if(g.home_team_score < g.visitor_team_score){a.w++;h.l++;}
@@ -403,9 +410,8 @@
 
         const east=[], west=[];
         for(const id in byId){
-          const o = byId[id];
-          const team=o.team;
-          const t={team,w:o.w,l:o.l, pct:(o.w+o.l?o.w/(o.w+o.l):0)};
+          const o=byId[id], team=o.team;
+          const t={team,w:o.w,l:o.l,pct:(o.w+o.l?o.w/(o.w+o.l):0)};
           (team.conference==="East"?east:west).push(t);
         }
 
@@ -426,17 +432,16 @@
         render(west,westBody);
 
       }catch(e){
-        eastBody.innerHTML = westBody.innerHTML =
-          `<tr><td colspan="5">Erreur : ${e.message}</td></tr>`;
+        eastBody.innerHTML=westBody.innerHTML=`<tr><td colspan="5">Erreur : ${e.message}</td></tr>`;
       }finally{
-        status.textContent = "";
+        status.textContent="";
       }
     }
     $("#btn-load-standings").addEventListener("click", loadStandings);
 
-    /*******************
+    /***************
       TEAMS
-    *******************/
+    ***************/
     async function loadTeams(){
       const grid=$("#teams-grid");
       const status=$("#teams-status");
@@ -458,9 +463,9 @@
     }
     $("#btn-load-teams").addEventListener("click", loadTeams);
 
-    /*******************
+    /***************
       PLAYERS
-    *******************/
+    ***************/
     async function searchPlayers(){
       const q=$("#player-q").value.trim();
       const list=$("#players-list");
