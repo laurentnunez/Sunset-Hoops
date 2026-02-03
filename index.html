@@ -2,195 +2,26 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Sunset Hoops – Scores, Classements, Équipes & Joueurs</title>
+  <title>Sunset Hoops</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <style>
-    :root{
-      --bg:#0f0d14;
-      --panel:#1a1720;
-      --muted:#dcd5e0;
-      --text:#f8f6fa;
-
-      /* Palette Suns */
-      --accent:#E56020;
-      --accent-2:#1D1160;
-      --highlight:#F9A01B;
-
-      --win:#2a9d8f;
-      --lose:#e63946;
-    }
-
-    *{box-sizing:border-box;margin:0;padding:0;}
-
-    body{
-      background:var(--bg);
-      color:var(--text);
-      font-family:system-ui,sans-serif;
-      line-height:1.5;
-      padding:12px;
-    }
-
-    /* HEADER */
-    .sunset-header {
-      padding:16px 0 20px;
-      display:flex;
-      flex-direction:column;
-      gap:14px;
-      border-bottom:1px solid #2b2533;
-    }
-
-    .header-left{
-      display:flex;
-      align-items:center;
-      gap:14px;
-    }
-
-    .logo{
-      width:64px;
-      height:64px;
-    }
-
-    .title-block h1{
-      font-size:1.7rem;
-      font-weight:900;
-      background:linear-gradient(90deg,var(--accent),var(--highlight));
-      -webkit-background-clip:text;
-      color:transparent;
-    }
-
-    .title-block .sub{
-      font-size:0.9rem;
-      color:var(--muted);
-      margin-top:-2px;
-    }
-
-    nav{
-      display:flex;
-      flex-wrap:nowrap;
-      overflow-x:auto;
-      gap:8px;
-      padding-bottom:4px;
-    }
-    nav::-webkit-scrollbar{ display:none; }
-
-    .tab{
-      background:var(--panel);
-      border:1px solid #352b45;
-      padding:8px 12px;
-      border-radius:8px;
-      cursor:pointer;
-      color:var(--muted);
-      font-size:0.9rem;
-      white-space:nowrap;
-    }
-
-    .tab.active{
-      background:var(--accent);
-      border-color:var(--accent);
-      color:#2b1405;
-    }
-
-    /* PANELS */
-    main{ margin-top:18px; }
-
-    .panel{
-      background:var(--panel);
-      border:1px solid #352b45;
-      padding:16px;
-      border-radius:12px;
-      margin-bottom:20px;
-    }
-
-    .controls{
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
-      align-items:center;
-      margin-bottom:12px;
-    }
-
-    .day-btn{
-      background:var(--accent);
-      color:#2b1405;
-      border:none;
-      padding:8px 12px;
-      border-radius:8px;
-      font-weight:600;
-      cursor:pointer;
-      white-space:nowrap;
-    }
-    .day-btn:hover{opacity:0.85;}
-
-    .row{
-      display:flex;
-      justify-content:space-between;
-      padding:10px 0;
-      border-bottom:1px solid #352b45;
-    }
-    .row:last-child{border-bottom:none;}
-
-    .badge{
-      padding:2px 8px;
-      background:#261f29;
-      border-radius:8px;
-      font-size:0.75rem;
-      color:var(--muted);
-    }
-
-    .score{font-weight:800;}
-
-    .table{
-      width:100%;
-      border-collapse:collapse;
-      margin-top:10px;
-    }
-
-    .table th,.table td{
-      padding:10px 5px;
-      border-bottom:1px solid #352b45;
-    }
-
-    .right{text-align:right;}
-
-    .teams-grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
-      gap:10px;
-    }
-
-    .team-card{
-      background:#16131c;
-      border:1px solid #352b45;
-      border-radius:10px;
-      padding:10px;
-    }
-
-    .muted{color:var(--muted);}
-
-    @media (min-width:768px){
-      body{padding:24px;}
-      .title-block h1{font-size:2rem;}
-      .teams-grid{
-        grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
-      }
-    }
-  </style>
-
+  <!-- Styles externes -->
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
-
   <!-- HEADER -->
   <header class="sunset-header">
     <div class="header-left">
-      <img src="logo.png" alt="logo Sunset Hoops" class="logo" />
+      <!-- Remplace "logo.png" par le nom réel de ton image si différent -->
+      logo.png
       <div class="title-block">
         <h1>Sunset Hoops</h1>
-        <p class="sub">Scores, Classements, Équipes & Joueurs</p>
+        <p class="sub"></p>
       </div>
     </div>
 
+    <!-- Onglets : toujours sur une seule ligne (géré par CSS: nowrap + overflow-x) -->
     <nav>
       <button class="tab active" data-tab="scores">Scores du jour</button>
       <button class="tab" data-tab="standings">Classements</button>
@@ -199,16 +30,16 @@
     </nav>
   </header>
 
-
-  <!-- PANELS -->
+  <!-- CONTENU -->
   <main>
 
     <!-- SCORES -->
-   <section id="scores" class="panel">
-    <div class="controls" id="score-days"></div>
-    <span id="scores-status" class="muted"></span>
-    <div id="scores-list"></div>
-  </section>
+    <section id="scores" class="panel">
+      <!-- Boutons dynamiques J-2..J+2 (rendus par JS) -->
+      <div class="controls" id="score-days"></div>
+      <span id="scores-status" class="muted"></span>
+      <div id="scores-list"></div>
+    </section>
 
     <!-- STANDINGS -->
     <section id="standings" class="panel" style="display:none">
@@ -220,18 +51,22 @@
         <span id="standings-status" class="muted"></span>
       </div>
 
-      <div style="display:grid;gap:16px;">
+      <div class="standings-grid">
         <div>
           <h3>Conférence Est</h3>
           <table class="table" id="east-table">
-            <thead><tr><th>#</th><th>Équipe</th><th class="right">V</th><th class="right">D</th><th class="right">%</th></tr></thead>
+            <thead>
+              <tr><th>#</th><th>Équipe</th><th class="right">V</th><th class="right">D</th><th class="right">%</th></tr>
+            </thead>
             <tbody></tbody>
           </table>
         </div>
         <div>
           <h3>Conférence Ouest</h3>
           <table class="table" id="west-table">
-            <thead><tr><th>#</th><th>Équipe</th><th class="right">V</th><th class="right">D</th><th class="right">%</th></tr></thead>
+            <thead>
+              <tr><th>#</th><th>Équipe</th><th class="right">V</th><th class="right">D</th><th class="right">%</th></tr>
+            </thead>
             <tbody></tbody>
           </table>
         </div>
@@ -259,102 +94,8 @@
 
   </main>
 
-
-  <!-- JAVASCRIPT -->
-  <script>
-    const API_BASE = "https://api.balldontlie.io/v1";
-    const API_KEY = "";
-    const FETCH_OPTS = {
-      method:"GET",
-      headers:{ "Accept":"application/json" }
-    };
-
-    const $ = s => document.querySelector(s);
-    const $$ = s => Array.from(document.querySelectorAll(s));
-
-    /* TABS */
-    $$(".tab").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        $$(".tab").forEach(b=>b.classList.remove("active"));
-        btn.classList.add("active");
-        ["scores","standings","teams","players"].forEach(id=>{
-          $("#"+id).style.display = (btn.dataset.tab===id)?"":"none";
-        });
-      });
-    });
-
-    /* AJAX BASIC */
-    async function getJson(url){
-      const res = await fetch(url, FETCH_OPTS);
-      if(!res.ok) throw new Error("API "+res.status);
-      return res.json();
-    }
-
-    /* SCORE BUTTONS */
-    function getDayOffsetDate(offset){
-      const d = new Date();
-      d.setDate(d.getDate()+offset);
-      return d.toISOString().slice(0,10);
-    }
-
-    function renderScoreButtons(){
-      const c = $("#score-days");
-      const labels = ["Avant-hier","Hier","Aujourd’hui","Demain","Après-demain"];
-      const offs = [-2,-1,0,1,2];
-
-      c.innerHTML = offs.map((o,i)=>
-        `<button class="day-btn" data-date="${getDayOffsetDate(o)}">${labels[i]}</button>`
-      ).join("");
-
-      c.querySelectorAll(".day-btn").forEach(btn=>{
-        btn.addEventListener("click", ()=> loadScoresByDate(btn.dataset.date));
-      });
-    }
-
-    async function loadScoresByDate(date){
-      const list=$("#scores-list");
-      const status=$("#scores-status");
-      list.innerHTML="";
-      status.textContent="Chargement…";
-
-      try{
-        const json=await getJson(`${API_BASE}/games?dates[]=${date}`);
-        const games=json.data;
-
-        if(!games.length){
-          list.innerHTML=`<div>Aucun match le ${date}.</div>`;
-          status.textContent="";
-          return;
-        }
-
-        list.innerHTML = games.map(g=>`
-          <div class="row">
-            <div>
-              <div><span class="badge">${g.season}</span></div>
-              <div class="muted">${g.visitor_team.full_name} @ ${g.home_team.full_name}</div>
-            </div>
-            <div class="score">
-              ${g.visitor_team.abbreviation} ${g.visitor_team_score} –
-              ${g.home_team.abbreviation} ${g.home_team_score}
-            </div>
-          </div>
-        `).join("");
-
-      }catch(e){
-        list.innerHTML=`<div>Erreur : ${e.message}</div>`;
-      }finally{
-        status.textContent="";
-      }
-    }
-
-    /* INITIAL LOAD */
-    renderScoreButtons();
-    loadScoresByDate(getDayOffsetDate(0));
-
-    /* STANDINGS + TEAMS + PLAYERS — inchangés */
-    /* … (pour garder réponse lisible) … même logique que ta version précédente */
-  </script>
-
+  <!-- Script externe -->
+  <script src="script.js"></script>
 </body>
 </html>
-
+``
