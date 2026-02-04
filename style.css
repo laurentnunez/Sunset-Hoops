@@ -172,7 +172,7 @@ main{ margin-top:18px; }
   gap:16px;
 }
 
-#btn-load-teams {
+#btn-load-teams ;#btn-load-standings {
 background:var(--accent);
   color:#2b1405;
   border:none;
