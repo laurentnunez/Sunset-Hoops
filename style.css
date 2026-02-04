@@ -172,6 +172,19 @@ main{ margin-top:18px; }
   gap:16px;
 }
 
+#btn-load-teams {
+background:var(--accent);
+  color:#2b1405;
+  border:none;
+  padding:8px 12px;
+  border-radius:8px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+
+
+
 @media (min-width:768px){
   body{padding:24px;}
   .title-block h1{font-size:2rem;}
