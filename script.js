@@ -1,8 +1,8 @@
 /***************************
   CONFIG API
 ***************************/
-const API_BASE = "https://api.balldontlie.io/v1";
-const API_KEY = ""; // Laissez vide si vous n'avez pas de clé
+const API_BASE = "https://api.balldontlie.io/v1/";
+const API_KEY = "433ab9b9-a787-4baa-9cb6-9871e4fcdf11"; // Laissez vide si vous n'avez pas de clé
 
 const FETCH_OPTS = {
   method:"GET",
