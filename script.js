@@ -117,11 +117,12 @@ async function loadScoresByDate(dateISO){
     list.innerHTML = games.map(g=>`
       <div class="row">
         <div>
-          <div><span class="badge">${g.status}</span></div>
-        </div>
+          <div><span class="badge">${g.time}</span></div>
+        
         <div class="score">
           ${g.visitor_team.name} ${g.visitor_team_score} –
           ${g.home_team.name} ${g.home_team_score}
+	</div>
         </div>
       </div>
     `).join("");
