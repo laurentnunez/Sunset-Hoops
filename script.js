@@ -119,10 +119,21 @@ async function loadScoresByDate(dateISO){
         <div>
           <div><span class="badge">${g.time}</span></div>
         
-        <div class="score">
-          ${g.visitor_team.name} ${g.visitor_team_score} –
-          ${g.home_team.name} ${g.home_team_score}
-	</div>
+	<div class="team away">
+            <img src="${g.visitorLogo}" alt="${visitor.full_name} logo" width="40" height="40">
+            <span>${visitor.full_name}</span>
+          </div>
+
+	<div class="score">
+            ${g.visitor_team_score} - ${g.home_team_score}
+         </div>
+
+	<div class="team home">
+            <img src="${g.homeLogo}" alt="${home.full_name} logo" width="40" height="40">
+            <span>${home.full_name}</span>
+          </div>
+        </div>
+
         </div>
       </div>
     `).join("");
