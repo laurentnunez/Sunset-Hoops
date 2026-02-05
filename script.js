@@ -1,8 +1,8 @@
 /***************************
   CONFIG API
 ***************************/
-const API_BASE = "https://v1.basketball.api-sports.io";
-const API_KEY = "dc9e3001fa42ccd178b14302724cafd8"; // Laissez vide si vous n'avez pas de clé
+const API_BASE = "https://api.balldontlie.io/v1/";
+const API_KEY = "433ab9b9-a787-4baa-9cb6-9871e4fcdf11"; // Laissez vide si vous n'avez pas de clé
 
 const FETCH_OPTS = {
   method:"GET",
