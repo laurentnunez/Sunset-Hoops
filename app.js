@@ -2,6 +2,40 @@
 // app.js
 import { NBA_LOGOS } from "./logos.js";
 
+// Mapping TheSportsDB -> abréviation NBA
+const TSDB_TO_NBA = {
+  "Atlanta Hawks": "ATL",
+  "Boston Celtics": "BOS",
+  "Brooklyn Nets": "BKN",
+  "Charlotte Hornets": "CHA",
+  "Chicago Bulls": "CHI",
+  "Cleveland Cavaliers": "CLE",
+  "Dallas Mavericks": "DAL",
+  "Denver Nuggets": "DEN",
+  "Detroit Pistons": "DET",
+  "Golden State Warriors": "GSW",
+  "Houston Rockets": "HOU",
+  "Indiana Pacers": "IND",
+  "LA Clippers": "LAC",
+  "Los Angeles Lakers": "LAL",
+  "Memphis Grizzlies": "MEM",
+  "Miami Heat": "MIA",
+  "Milwaukee Bucks": "MIL",
+  "Minnesota Timberwolves": "MIN",
+  "New Orleans Pelicans": "NOP",
+  "New York Knicks": "NYK",
+  "Oklahoma City Thunder": "OKC",
+  "Orlando Magic": "ORL",
+  "Philadelphia 76ers": "PHI",
+  "Phoenix Suns": "PHX",
+  "Portland Trail Blazers": "POR",
+  "Sacramento Kings": "SAC",
+  "San Antonio Spurs": "SAS",
+  "Toronto Raptors": "TOR",
+  "Utah Jazz": "UTA",
+  "Washington Wizards": "WAS",
+};
+
 /* ============================================
    CONFIG API (BallDontLie nouvelle arborescence)
    ============================================ */
@@ -58,6 +92,20 @@ async function fetchPlayers({ perPage = 100, teamId } = {}) {
   if (!res.ok) throw new Error(`Erreur API players: ${res.status}`);
   return await res.json(); // { data, meta }
 }
+
+// === TheSportsDB: récupérer les classements NBA ===
+async function fetchNBAStandingsTSDB() {
+  const season = "2025-2026";  // saison actuelle
+  const url = `https://www.thesportsdb.com/api/v1/json/3/lookuptable.php?l=4387&s=${season}`;
+
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Impossible de récupérer les classements TSDB");
+
+  const json = await res.json();
+  return json.table || [];
+}
+
+
 
 async function fetchStandings() {
   const url = `${API_BASE}${NBA}/standings`;
@@ -163,45 +211,40 @@ async function loadGames(dateString) {
 /* ====================================
    STANDINGS
    ==================================== */
-function renderStandings(data) {
+function renderStandingsTSDB(teams) {
   const c = document.getElementById("standings");
 
-  if (!data?.data) {
-    c.innerHTML = `<p class="empty">Classements indisponibles.</p>`;
-    return;
-  }
+  const east = teams.filter(t => t.strDivision.includes("East"));
+  const west = teams.filter(t => t.strDivision.includes("West"));
 
-  const east = [];
-  const west = [];
-
-  data.data.forEach(t => {
-    const team = t.team || t;
-    const conf = (t.conference || team.conference || "").toLowerCase();
-
-    const o = {
-      name: team.full_name,
-      abbr: team.abbreviation,
-      wins: t.wins ?? "?",
-      losses: t.losses ?? "?"
-    };
-
-    if (conf.startsWith("e")) east.push(o);
-    else west.push(o);
-  });
-
-  function table(title, arr) {
+  function table(title, list) {
     return `
       <div>
         <h3>${title}</h3>
         <table class="table">
-          <thead><tr><th>#</th><th>Équipe</th><th>Bilan</th></tr></thead>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Équipe</th>
+              <th>Bilan</th>
+            </tr>
+          </thead>
           <tbody>
-            ${arr.map((t, i) => `
-              <tr>
-                <td>${i + 1}</td>
-                <td><button class="linklike" data-team="${t.abbr}">${t.name}</button></td>
-                <td>${t.wins}-${t.losses}</td>
-              </tr>`).join("")}
+            ${list.map(t => {
+              const abbr = TSDB_TO_NBA[t.strTeam] || null;
+              const logo = abbr ? NBA_LOGOS[abbr] : "";
+
+              return `
+                <tr>
+                  <td>${t.intRank}</td>
+                  <td style="display:flex;align-items:center;gap:8px;">
+                    <img src="${logo}" width="26" height="26" style="border-radius:4px;" />
+                    ${t.strTeam}
+                  </td>
+                  <td>${t.intWin}-${t.intLoss}</td>
+                </tr>
+              `;
+            }).join("")}
           </tbody>
         </table>
       </div>
@@ -214,22 +257,15 @@ function renderStandings(data) {
       ${table("Conférence Ouest", west)}
     </div>
   `;
-
-  c.querySelectorAll("button[data-team]").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const abbr = btn.dataset.team;
-      const teams = await fetchTeams();
-      const t = teams.find(x => x.abbreviation === abbr);
-      if (t) showTeamDetail(t);
-    });
-  });
 }
 
 async function loadStandings() {
   setView("standings");
   showLoader();
+
   try {
-    renderStandings(await fetchStandings());
+    const data = await fetchNBAStandingsTSDB();
+    renderStandingsTSDB(data);
   } catch (e) {
     renderErrorIn("standings", e);
   } finally {
