@@ -1,4 +1,4 @@
-// nbaLogos.js
+// logos.js
 export const NBA_LOGOS = {
   ATL: "https://raw.githubusercontent.com/gtkacz/nba-logo-api/main/icons/atl.svg",
   BOS: "https://raw.githubusercontent.com/gtkacz/nba-logo-api/main/icons/bos.svg",

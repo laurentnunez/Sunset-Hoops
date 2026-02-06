@@ -5,7 +5,7 @@ import { NBA_LOGOS } from './logos.js';
 const API_BASE = 'https://api.balldontlie.io';
 const NBA = '/nba/v1';
 const API_KEY = '433ab9b9-a787-4baa-9cb6-9871e4fcdf11';
-const HEADERS = { 'Authorization': API_KEY }; // pas de "Bearer"
+const HEADERS = { 'Authorization': API_KEY }; // pas de "Bearer" (cf. docs/tests récents)
 
 // --- Utils ---
 function toLocalISODate(d = new Date()) {
@@ -16,8 +16,8 @@ function toLocalISODate(d = new Date()) {
 function computeSeasonFromDate(dateString) {
   const d = new Date(dateString + 'T00:00:00');
   const y = d.getFullYear();
-  const m = d.getMonth() + 1; // 1..12
-  // Saison NBA démarre ~octobre → si mois >= 10, saison = année courante, sinon année - 1
+  const m = d.getMonth() + 1;
+  // Saison NBA débute ~octobre -> année de début = y si m>=10, sinon y-1
   return m >= 10 ? y : y - 1;
 }
 
@@ -29,12 +29,13 @@ function enrichGamesWithLogos(games) {
   }));
 }
 
-// --- API calls (nouveaux endpoints /nba/v1/...) ---
+// --- API calls ---
 async function fetchGamesByDate(dateString) {
   const season = computeSeasonFromDate(dateString);
-  // → On filtre à la saison en cours + la date sélectionnée
   const url = `${API_BASE}${NBA}/games?dates[]=${dateString}&seasons[]=${season}&per_page=100`;
+  console.log('[BDL] GET', url);
   const res = await fetch(url, { headers: HEADERS });
+  console.log('[BDL] status', res.status);
   if (!res.ok) {
     const txt = await res.text().catch(() => '');
     throw new Error(`Erreur API (games): ${res.status} ${txt}`);
@@ -45,13 +46,15 @@ async function fetchGamesByDate(dateString) {
 
 async function fetchStatsByGameId(gameId) {
   const url = `${API_BASE}${NBA}/stats?game_ids[]=${gameId}&per_page=100`;
+  console.log('[BDL] GET', url);
   const res = await fetch(url, { headers: HEADERS });
+  console.log('[BDL] status', res.status);
   if (!res.ok) {
     const txt = await res.text().catch(() => '');
     throw new Error(`Erreur API (stats): ${res.status} ${txt}`);
   }
   const json = await res.json();
-  return json.data; // stats par joueur pour ce match
+  return json.data;
 }
 
 // --- UI helpers ---
@@ -61,18 +64,15 @@ function showLoader() {
   el.setAttribute('aria-hidden', 'false');
   document.getElementById('scores').innerHTML = '';
 }
-
 function hideLoader() {
   const el = document.getElementById('loader');
   el.classList.add('hidden');
   el.setAttribute('aria-hidden', 'true');
 }
-
 function renderEmpty(message) {
   const container = document.getElementById('scores');
   container.innerHTML = `<p class="empty">${message}</p>`;
 }
-
 function renderError(err) {
   const container = document.getElementById('scores');
   container.innerHTML = `<p class="error">${err.message}</p>`;
@@ -112,7 +112,7 @@ function renderScores(games) {
 
     score.textContent = `${g.visitor_team_score} - ${g.home_team_score}`;
 
-    // Bouton stats (toggle + lazy fetch)
+    // Bouton stats (lazy fetch + toggle)
     statsBtn.addEventListener('click', async () => {
       if (!statsPanel.dataset.loaded) {
         statsBtn.disabled = true;
@@ -129,14 +129,9 @@ function renderScores(games) {
           statsBtn.disabled = false;
         }
       } else {
-        // toggle
-        if (statsPanel.classList.contains('hidden')) {
-          statsPanel.classList.remove('hidden');
-          statsBtn.textContent = 'Masquer les stats';
-        } else {
-          statsPanel.classList.add('hidden');
-          statsBtn.textContent = 'Voir les stats';
-        }
+        statsPanel.classList.toggle('hidden');
+        statsBtn.textContent = statsPanel.classList.contains('hidden')
+          ? 'Voir les stats' : 'Masquer les stats';
       }
     });
 
@@ -154,21 +149,17 @@ function aggregateTeamTotals(stats, teamId) {
       return acc;
     }, { pts: 0, reb: 0, ast: 0 });
 }
-
 function topScorers(stats, teamId, n=3) {
   const arr = stats
     .filter(s => s.team && s.team.id === teamId)
     .map(s => ({ name: `${s.player.first_name} ${s.player.last_name}`, pts: s.pts || 0, reb: s.reb || 0, ast: s.ast || 0 }));
   return arr.sort((a,b) => b.pts - a.pts).slice(0, n);
 }
-
 function renderStatsPanel(panel, stats, game) {
   const homeId = game.home_team.id;
   const awayId = game.visitor_team.id;
-
   const homeTotals = aggregateTeamTotals(stats, homeId);
   const awayTotals = aggregateTeamTotals(stats, awayId);
-
   const homeTop = topScorers(stats, homeId);
   const awayTop = topScorers(stats, awayId);
 
@@ -206,3 +197,19 @@ async function loadGames(dateString) {
 }
 
 function init() {
+  const dateInput = document.getElementById('game-date');
+  const todayBtn = document.getElementById('today-btn');
+  const today = toLocalISODate();
+
+  dateInput.value = today;
+  loadGames(today);
+
+  dateInput.addEventListener('change', (e) => loadGames(e.target.value));
+  todayBtn.addEventListener('click', () => {
+    const t = toLocalISODate();
+    dateInput.value = t;
+    loadGames(t);
+  });
+}
+
+init();

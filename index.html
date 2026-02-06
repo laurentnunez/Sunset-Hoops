@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="fr">
 <head>
@@ -10,29 +9,23 @@
 <body>
   <main class="container">
     <header class="header">
-      <div>
-        <h1>Scores NBA</h1>
-        <p class="hint">Données : BallDontLie • Logos : SVG publics</p>
-      </div>
+      <h1>Scores NBA</h1>
+      <p class="hint">Données : BallDontLie • Logos : SVG publics</p>
     </header>
 
-    <!-- Contrôles -->
     <div class="controls">
       <label for="game-date">Date :</label>
       <input type="date" id="game-date" />
       <button id="today-btn" type="button">Aujourd’hui</button>
     </div>
 
-    <!-- Loader -->
     <div id="loader" class="loader hidden" aria-hidden="true" aria-live="polite">
       <div class="spinner" role="status" aria-label="Chargement"></div>
       <p>Chargement…</p>
     </div>
 
-    <!-- Scores -->
     <section id="scores" class="scores" aria-live="polite"></section>
 
-    <!-- Template d'un match -->
     <template id="game-template">
       <article class="game" role="group" aria-label="Match">
         <div class="team team--away">
@@ -52,6 +45,14 @@
     </template>
   </main>
 
+  <!-- IMPORTANT : type=module et src correct -->
   <script type="module" src="app.js"></script>
+
+  <!-- Trace globale des erreurs JS pour t'aider -->
+  <script>
+    window.onerror = function (msg, src, line, col, err) {
+      console.error("[GLOBAL ERROR]", msg, "at", src + ":" + line + ":" + col, err);
+    };
+  </script>
 </body>
 </html>
