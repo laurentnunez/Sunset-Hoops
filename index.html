@@ -1,0 +1,57 @@
+
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scores NBA</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <header class="header">
+      <div>
+        <h1>Scores NBA</h1>
+        <p class="hint">Données : BallDontLie • Logos : SVG publics</p>
+      </div>
+    </header>
+
+    <!-- Contrôles -->
+    <div class="controls">
+      <label for="game-date">Date :</label>
+      <input type="date" id="game-date" />
+      <button id="today-btn" type="button">Aujourd’hui</button>
+    </div>
+
+    <!-- Loader -->
+    <div id="loader" class="loader hidden" aria-hidden="true" aria-live="polite">
+      <div class="spinner" role="status" aria-label="Chargement"></div>
+      <p>Chargement…</p>
+    </div>
+
+    <!-- Scores -->
+    <section id="scores" class="scores" aria-live="polite"></section>
+
+    <!-- Template d'un match -->
+    <template id="game-template">
+      <article class="game" role="group" aria-label="Match">
+        <div class="team team--away">
+          <img class="team-logo" alt="Logo équipe visiteur" width="36" height="36" loading="lazy" />
+          <span class="team-name"></span>
+        </div>
+        <div class="score"></div>
+        <div class="team team--home">
+          <img class="team-logo" alt="Logo équipe domicile" width="36" height="36" loading="lazy" />
+          <span class="team-name"></span>
+        </div>
+        <div class="actions">
+          <button class="stats-btn" type="button">Voir les stats</button>
+        </div>
+        <div class="stats-panel hidden"></div>
+      </article>
+    </template>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
