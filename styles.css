@@ -139,3 +139,56 @@ body {
 @media (min-width: 521px) and (max-width: 900px) {
   #teams { grid-template-columns: repeat(3, 1fr); }
 }
+
+
+/* ---- Onglets ---- */
+.sh-tabs {
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+  padding: .5rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fafafa;
+}
+.sh-tab {
+  border: 1px solid transparent;
+  background: transparent;
+  padding: .5rem .75rem;
+  border-radius: .5rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+.sh-tab.is-active {
+  background: #111827;
+  color: #fff;
+}
+.sh-reload {
+  margin-left: auto;
+  border: 1px solid #d1d5db;
+  background: white;
+  padding: .4rem .6rem;
+  border-radius: .5rem;
+  cursor: pointer;
+}
+
+/* ---- Sections ---- */
+.sh-main { padding: 1rem; }
+.sh-section.is-hidden { display: none; }
+
+/* ---- États ---- */
+.sh-status { padding: .5rem 1rem; color: #374151; font-size: .9rem; }
+.sh-card {
+  border: 1px solid #e5e7eb;
+  border-radius: .75rem;
+  padding: .75rem 1rem;
+  margin-bottom: .75rem;
+  background: #fff;
+}
+.sh-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: .75rem;
+}
+.sh-title { margin: .25rem 0 .5rem; font-size: 1.1rem; }
+.sh-subtle { color: #6b7280; font-size: .9rem; }
+

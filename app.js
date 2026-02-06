@@ -2,502 +2,158 @@
 // app.js
 import { NBA_LOGOS } from "./logos.js";
 
-// Mapping TheSportsDB -> abréviation NBA
-const TSDB_TO_NBA = {
-  "Atlanta Hawks": "ATL",
-  "Boston Celtics": "BOS",
-  "Brooklyn Nets": "BKN",
-  "Charlotte Hornets": "CHA",
-  "Chicago Bulls": "CHI",
-  "Cleveland Cavaliers": "CLE",
-  "Dallas Mavericks": "DAL",
-  "Denver Nuggets": "DEN",
-  "Detroit Pistons": "DET",
-  "Golden State Warriors": "GSW",
-  "Houston Rockets": "HOU",
-  "Indiana Pacers": "IND",
-  "LA Clippers": "LAC",
-  "Los Angeles Lakers": "LAL",
-  "Memphis Grizzlies": "MEM",
-  "Miami Heat": "MIA",
-  "Milwaukee Bucks": "MIL",
-  "Minnesota Timberwolves": "MIN",
-  "New Orleans Pelicans": "NOP",
-  "New York Knicks": "NYK",
-  "Oklahoma City Thunder": "OKC",
-  "Orlando Magic": "ORL",
-  "Philadelphia 76ers": "PHI",
-  "Phoenix Suns": "PHX",
-  "Portland Trail Blazers": "POR",
-  "Sacramento Kings": "SAC",
-  "San Antonio Spurs": "SAS",
-  "Toronto Raptors": "TOR",
-  "Utah Jazz": "UTA",
-  "Washington Wizards": "WAS",
-};
+// ======== API ========
+const API = "https://www.balldontlie.io/api/v1";
 
-/* ============================================
-   CONFIG API (BallDontLie nouvelle arborescence)
-   ============================================ */
-const API_BASE = "https://api.balldontlie.io";
-const NBA = "/nba/v1";
+// Cache
+let teamsData = [];
+let playersData = [];
+let scoresData = [];
 
-const API_KEY = "433ab9b9-a787-4baa-9cb6-9871e4fcdf11";
-const HEADERS = { Authorization: API_KEY }; // pas de Bearer selon la doc
+// DOM
+const sectionScores = document.getElementById("section-scores");
+const sectionTeams = document.getElementById("section-teams");
+const sectionPlayers = document.getElementById("section-players");
 
-/* =============== UTILS ================== */
-function toLocalISODate(d = new Date()) {
-  const tzo = d.getTimezoneOffset() * 60000;
-  return new Date(d.getTime() - tzo).toISOString().slice(0, 10);
-}
+const inputPlayerSearch = document.getElementById("playerSearch");
+const inputTeamSearch = document.getElementById("teamSearch");
+const inputGameDate = document.getElementById("gameDate");
+const btnFilterDate = document.getElementById("filterDateBtn");
 
-function computeSeasonFromDate(dateString) {
-  const d = new Date(dateString + "T00:00:00");
-  const y = d.getFullYear();
-  const m = d.getMonth() + 1;
-  return m >= 10 ? y : y - 1;
-}
+// ======== FETCH ========
 
-function setView(viewId) {
-  const views = ["scores", "standings", "teams", "players", "team-detail", "player-detail"];
-  views.forEach(v => document.getElementById(v).classList.add("hidden"));
-  document.getElementById(viewId).classList.remove("hidden");
-  document.getElementById("score-controls").classList.toggle("hidden", viewId !== "scores");
-}
-
-const logo = abbr => NBA_LOGOS[abbr] || "";
-
-/* =============== API CALLS ================== */
-async function fetchGamesByDate(dateString) {
-  const season = computeSeasonFromDate(dateString);
-  const url = `${API_BASE}${NBA}/games?dates[]=${dateString}&seasons[]=${season}&per_page=100`;
-  const res = await fetch(url, { headers: HEADERS });
-  if (!res.ok) throw new Error(`Erreur API games: ${res.status}`);
-  return (await res.json()).data;
-}
-
-async function fetchTeams() {
-  const url = `${API_BASE}${NBA}/teams?per_page=100`;
-  const res = await fetch(url, { headers: HEADERS });
-  if (!res.ok) throw new Error(`Erreur API teams: ${res.status}`);
-  return (await res.json()).data;
-}
-
-async function fetchPlayers({ perPage = 100, teamId } = {}) {
-  const params = new URLSearchParams();
-  params.set("per_page", perPage);
-  if (teamId) params.append("team_ids[]", teamId);
-  const url = `${API_BASE}${NBA}/players?${params}`;
-  const res = await fetch(url, { headers: HEADERS });
-  if (!res.ok) throw new Error(`Erreur API players: ${res.status}`);
-  return await res.json(); // { data, meta }
-}
-
-async function fetchNBAStandingsTSDB() {
-  const season = "2022-2023";   // Saison DISPONIBLE
-  const url = `https://www.thesportsdb.com/api/v1/json/3/lookuptable.php?l=4387&s=${season}`;
-
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Erreur HTTP TheSportsDB");
-
-  const json = await res.json();
-  if (!json.table) throw new Error("Aucun classement disponible sur TheSportsDB pour cette saison");
-  
-  return json.table;
-}
-
-
-async function fetchStandings() {
-  const url = `${API_BASE}${NBA}/standings`;
-  const res = await fetch(url, { headers: HEADERS });
-  if (!res.ok) throw new Error(`Standings indisponibles (status ${res.status})`);
-  return await res.json();
-}
-
-async function fetchTeamById(id) {
-  const url = `${API_BASE}${NBA}/teams/${id}`;
-  const res = await fetch(url, { headers: HEADERS });
-  if (!res.ok) throw new Error(`Erreur API team: ${res.status}`);
-  return await res.json();
-}
-
-async function fetchPlayerById(id) {
-  const url = `${API_BASE}${NBA}/players/${id}`;
-  const res = await fetch(url, { headers: HEADERS });
-  if (!res.ok) throw new Error(`Erreur API player: ${res.status}`);
-  return await res.json();
-}
-
-/* =============== LOADER + ERRORS ================== */
-function showLoader() {
-  const el = document.getElementById("loader");
-  el.classList.remove("hidden");
-  el.setAttribute("aria-hidden", "false");
-}
-
-function hideLoader() {
-  const el = document.getElementById("loader");
-  el.classList.add("hidden");
-  el.setAttribute("aria-hidden", "true");
-}
-
-function renderErrorIn(id, err) {
-  document.getElementById(id).innerHTML = `<p class="error">${err.message}</p>`;
-}
-
-/* ====================================
-   SCORES
-   ==================================== */
-function enrichGamesWithLogos(g) {
-  return g.map(m => ({
-    ...m,
-    homeLogo: logo(m.home_team?.abbreviation),
-    visitorLogo: logo(m.visitor_team?.abbreviation)
-  }));
-}
-
-function renderScores(games) {
-  const c = document.getElementById("scores");
-  if (!games.length) {
-    c.innerHTML = `<p class="empty">Aucun match trouvé.</p>`;
-    return;
+// Scores (games)
+async function fetchScores(date = null) {
+  let url = `${API}/games?per_page=40`;
+  if (date) {
+    url += `&start_date=${date}&end_date=${date}`;
   }
-  const tpl = document.getElementById("game-template");
-  c.innerHTML = "";
+  const res = await fetch(url);
+  const json = await res.json();
+  return json.data;
+}
+
+// Teams
+async function fetchTeams() {
+  const res = await fetch(`${API}/teams`);
+  const json = await res.json();
+  return json.data;
+}
+
+// Players (search enabled)
+async function fetchPlayers(search = "") {
+  const res = await fetch(`${API}/players?search=${search}&per_page=50`);
+  const json = await res.json();
+  return json.data;
+}
+
+// ======== RENDERERS ========
+
+// Utility: get logo from logos.js
+function getLogo(teamId) {
+  return logos[teamId] || "";
+}
+
+// ---- Scores ----
+function renderScores(games) {
+  sectionScores.innerHTML = "<h2>Scores</h2>";
 
   games.forEach(g => {
-    const node = tpl.content.cloneNode(true);
+    const div = document.createElement("div");
+    div.className = "sh-card";
 
-    // AWAY
-    const away = node.querySelector(".team--away");
-    const awayLogo = away.querySelector(".team-logo");
-    const awayName = away.querySelector(".team-name");
+    const homeLogo = NBA_LOGOS[g.home_team.abbreviation];
+    const awayLogo = NBA_LOGOS[g.visitor_team.abbreviation];
 
-    awayLogo.src = g.visitorLogo;
-    awayName.textContent = g.visitor_team.full_name;
-    awayLogo.addEventListener("click", () => showTeamDetail(g.visitor_team));
-    awayName.addEventListener("click", () => showTeamDetail(g.visitor_team));
+    div.innerHTML = `
+      <div class="sh-game">
+        <img src="${homeLogo}" width="40"/>
+        <strong>${g.home_team.full_name} ${g.home_team_score}</strong>
 
-    // HOME
-    const home = node.querySelector(".team--home");
-    const homeLogo = home.querySelector(".team-logo");
-    const homeName = home.querySelector(".team-name");
+        <span> - </span>
 
-    homeLogo.src = g.homeLogo;
-    homeName.textContent = g.home_team.full_name;
-    homeLogo.addEventListener("click", () => showTeamDetail(g.home_team));
-    homeName.addEventListener("click", () => showTeamDetail(g.home_team));
+        <strong>${g.visitor_team_score} ${g.visitor_team.full_name}</strong>
+        <img src="${awayLogo}" width="40"/>
+      </div>
+    `;
 
-    // SCORE
-    node.querySelector(".score").textContent = `${g.visitor_team_score} - ${g.home_team_score}`;
-
-    c.appendChild(node);
+    sectionScores.appendChild(div);
   });
 }
 
-async function loadGames(dateString) {
-  setView("scores");
-  showLoader();
-  try {
-    const games = await fetchGamesByDate(dateString);
-    renderScores(enrichGamesWithLogos(games));
-  } catch (e) {
-    renderErrorIn("scores", e);
-  } finally {
-    hideLoader();
-  }
-}
-
-/* ====================================
-   STANDINGS
-   ==================================== */
-function renderStandingsTSDB(teams) {
-  const c = document.getElementById("standings");
-
-  const east = teams.filter(t => t.strDivision.includes("East"));
-  const west = teams.filter(t => t.strDivision.includes("West"));
-
-  function table(title, list) {
-    return `
-      <div>
-        <h3>${title}</h3>
-        <table class="table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Équipe</th>
-              <th>Bilan</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${list.map(t => {
-              const abbr = TSDB_TO_NBA[t.strTeam] || null;
-              const logo = abbr ? NBA_LOGOS[abbr] : "";
-
-              return `
-                <tr>
-                  <td>${t.intRank}</td>
-                  <td style="display:flex;align-items:center;gap:8px;">
-                    <img src="${logo}" width="26" height="26" style="border-radius:4px;" />
-                    ${t.strTeam}
-                  </td>
-                  <td>${t.intWin}-${t.intLoss}</td>
-                </tr>
-              `;
-            }).join("")}
-          </tbody>
-        </table>
-      </div>
-    `;
-  }
-
-  c.innerHTML = `
-    <div class="standings-grid">
-      ${table("Conférence Est", east)}
-      ${table("Conférence Ouest", west)}
-    </div>
-  `;
-}
-
-async function loadStandings() {
-  setView("standings");
-  showLoader();
-
-  try {
-    const data = await fetchNBAStandingsTSDB();
-    renderStandingsTSDB(data);
-  } catch (e) {
-    renderErrorIn("standings", e);
-  } finally {
-    hideLoader();
-  }
-}
-
-/* ====================================
-   TEAMS
-   ==================================== */
-function renderTeamsGrid(teams) {
-  const c = document.getElementById("teams");
-  const tpl = document.getElementById("team-card-template");
-  c.innerHTML = "";
+// ---- Teams ----
+function renderTeams(teams) {
+  sectionTeams.innerHTML = "<h2>Équipes</h2>";
 
   teams.forEach(t => {
-    const node = tpl.content.cloneNode(true);
-    node.querySelector(".team-card-logo").src = logo(t.abbreviation);
-    node.querySelector(".team-card-name").textContent = t.full_name;
-    node.querySelector(".team-card-meta").textContent = `${t.conference} / ${t.division}`;
+    const div = document.createElement("div");
+    div.className = "sh-card";
 
-    const card = node.querySelector(".team-card");
-    card.addEventListener("click", () => showTeamDetail(t));
+    const logo = NBA_LOGOS[t.abbreviation];
 
-    c.appendChild(node);
+    div.innerHTML = `
+      <img src="${logo}" width="40"/>
+      <strong>${t.full_name}</strong><br>
+      <span>${t.conference} - ${t.division}</span>
+    `;
+
+    sectionTeams.appendChild(div);
+  });
+}
+
+// ---- Players ----
+function renderPlayers(players) {
+  sectionPlayers.innerHTML = "<h2>Joueurs</h2>";
+
+  players.forEach(p => {
+    const div = document.createElement("div");
+    div.className = "sh-card";
+
+    const logo = NBA_LOGOS[p.team.abbreviation];
+
+    div.innerHTML = `
+      <strong>${p.first_name} ${p.last_name}</strong><br>
+      <span>${p.team.full_name}</span><br>
+      <img src="${logo}" width="40"/>
+    `;
+
+    sectionPlayers.appendChild(div);
   });
 }
 
 
-async function loadTeams() {
-  setView("teams");
-  showLoader();
-  try {
-    const teams = await fetchTeams();
+// ======== EVENTS ========
 
-       const nbaTeams = teams.filter(t => {
-      const c = (t.conference || '').toLowerCase();
-      return c === 'east' || c === 'west';
-    });
-
-    renderTeamsGrid(nbaTeams);
-  } catch (e) {
-    renderErrorIn("teams", e);
-  } finally {
-    hideLoader();
-  }
-}
-
-
-
-/* ====================================
-   TEAM DETAIL + ROSTER
-   ==================================== */
-async function showTeamDetail(team) {
-  setView("team-detail");
-  showLoader();
-
-  try {
-    const t = team.id ? team : (await fetchTeamById(team)).data;
-    const container = document.getElementById("team-detail");
-
-    const playersResp = await fetchPlayers({ teamId: t.id });
-    const players = playersResp.data;
-
-    container.innerHTML = `
-      <div class="team-hero">
-        <img src="${logo(t.abbreviation)}" alt="${t.full_name}" />
-        <div>
-          <div class="title">${t.full_name}</div>
-          <div class="sub">${t.city} / ${t.conference} / ${t.division}</div>
-        </div>
-	<button id="back-teams" class="nav-btn" style="margin-top:10px;">
-        Retour
-      </button>
-      </div>
-
-      <div class="section-title">Effectif</div>
-      <div class="roster"></div>
-    `;
-
-    document.getElementById("back-teams")
-      .addEventListener("click", () => setView("teams"));
-
-    const r = container.querySelector(".roster");
-    r.innerHTML = "";
-
-    players.forEach(p => {
-      const row = document.createElement("div");
-      row.className = "player-row";
-      row.innerHTML = `
-        <span class="player-name">${p.first_name} ${p.last_name}</span>
-        <span class="player-meta">${p.position || "?"}</span>
-      `;
-      row.addEventListener("click", () => showPlayerDetail(p.id));
-      r.appendChild(row);
-    });
-
-  } catch (e) {
-    renderErrorIn("team-detail", e);
-  } finally {
-    hideLoader();
-  }
-}
-
-/* ====================================
-   PLAYERS LIST + PLAYER DETAIL
-   ==================================== */
-async function loadPlayers() {
-  setView("players");
-  showLoader();
-
-  try {
-    const resp = await fetchPlayers({ perPage: 100 });
-    const players = resp.data;
-    const container = document.getElementById("players");
-
-    container.innerHTML = "";
-    const tpl = document.getElementById("player-row-template");
-
-    players.forEach(p => {
-      const node = tpl.content.cloneNode(true);
-      node.querySelector(".player-name").textContent = `${p.first_name} ${p.last_name}`;
-      node.querySelector(".player-meta").textContent = `${p.team?.full_name || "—"} • ${p.position || "?"}`;
-
-      node.querySelector(".player-row")
-        .addEventListener("click", () => showPlayerDetail(p.id));
-
-      container.appendChild(node);
-    });
-
-  } catch (e) {
-    renderErrorIn("players", e);
-  } finally {
-    hideLoader();
-  }
-}
-
-async function showPlayerDetail(id) {
-  setView("player-detail");
-  showLoader();
-
-  try {
-    const resp = await fetchPlayerById(id);
-    const p = resp.data;
-
-    const c = document.getElementById("player-detail");
-    const team = p.team;
-
-    c.innerHTML = `
-      <h2>${p.first_name} ${p.last_name}</h2>
-
-      <div class="detail-grid">
-        <div><strong>Équipe :</strong>
-          <button class="linklike" id="player-team-btn">
-            ${team?.full_name || "—"}
-          </button>
-        </div>
-
-        <div><strong>Poste :</strong> ${p.position || "?"}</div>
-        <div><strong>Taille :</strong> ${p.height_feet ? `${p.height_feet}'${p.height_inches}"` : "?"}</div>
-        <div><strong>Poids :</strong> ${p.weight_pounds ? `${p.weight_pounds} lbs` : "?"}</div>
-      </div>
-
-      <button id="back-players" class="nav-btn" style="margin-top:10px;">
-        Retour
-      </button>
-    `;
-
-    document.getElementById("back-players")
-      .addEventListener("click", () => setView("players"));
-
-    document.getElementById("player-team-btn")
-      .addEventListener("click", async () => {
-        const teams = await fetchTeams();
-        const t = teams.find(x => x.id === team?.id);
-        if (t) showTeamDetail(t);
-      });
-
-  } catch (e) {
-    renderErrorIn("player-detail", e);
-  } finally {
-    hideLoader();
-  }
-}
-
-/* ====================================
-   INIT
-   ==================================== */
-function init() {
-  
-document.querySelectorAll(".nav-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-
-    // --- effet bouton actif ---
-    document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-
-    // --- ta logique existante ---
-    const view = btn.dataset.view;
-    if (view === "scores")
-      loadGames(document.getElementById("game-date").value);
-    else if (view === "standings")
-      loadStandings();
-    else if (view === "teams")
-      loadTeams();
-    else if (view === "players")
-      loadPlayers();
-  });
+// Search players (live)
+inputPlayerSearch.addEventListener("input", async () => {
+  const q = inputPlayerSearch.value.trim();
+  const players = await fetchPlayers(q);
+  renderPlayers(players);
 });
 
+// Search teams (local filter)
+inputTeamSearch.addEventListener("input", () => {
+  const q = inputTeamSearch.value.toLowerCase();
+  const filtered = teamsData.filter(t =>
+    t.full_name.toLowerCase().includes(q)
+  );
+  renderTeams(filtered);
+});
 
-  const dateInput = document.getElementById("game-date");
-  const todayBtn = document.getElementById("today-btn");
+// Filter games by date
+btnFilterDate.addEventListener("click", async () => {
+  const date = inputGameDate.value;
+  const games = await fetchScores(date);
+  renderScores(games);
+});
 
-  const today = toLocalISODate();
-  dateInput.value = today;
+// ======== INIT ========
+window.addEventListener("DOMContentLoaded", async () => {
+  teamsData = await fetchTeams();
+  playersData = await fetchPlayers("");
+  scoresData = await fetchScores();
 
-  todayBtn.addEventListener("click", () => {
-    const t = toLocalISODate();
-    dateInput.value = t;
-    loadGames(t);
-  });
-
-  dateInput.addEventListener("change", e => loadGames(e.target.value));
-  document.querySelector('.nav-btn[data-view="scores"]').classList.add("active");
-
-  loadGames(today);
-}
-
-init();
-
-// Global error catcher
-window.onerror = function (m, s, l, c, e) {
-  console.error("[GLOBAL ERROR]", m, s, l, c, e);
-};
+  renderScores(scoresData);
+  renderTeams(teamsData);
+  renderPlayers(playersData);
+});

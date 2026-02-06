@@ -1,85 +1,52 @@
-
 <!doctype html>
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sunset Hoops</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./styles.css" />
+  
+	<script type="module" src="logos.js"></script>
+	<script type="module" src="app.js"></script>
+
 </head>
 <body>
-  <main class="container">
-    <header class="header">
-    <div class="brand">
-    <img src="./logo.png" alt="Sunset Hoops - logo" class="brand-logo" />
-    <h1 class="brand-title">Sunset Hoops</h1>
-  </div>
+  <header class="sh-header">
+    <img src="./logo.png" alt="Sunset Hoops" class="sh-logo" />
+    <h1>Sunset Hoops</h1>
+  </header>
 
-    </header>
+  <!-- Navigation par onglets -->
+  <nav class="sh-tabs" role="tablist" aria-label="Sections Sunset Hoops">
+    <button class="sh-tab is-active" data-tab="scores" role="tab" aria-selected="true">Scores</button>
+    <button class="sh-tab" data-tab="teams" role="tab" aria-selected="false">Équipes</button>
+    <button class="sh-tab" data-tab="players" role="tab" aria-selected="false">Joueurs</button>
+    <button class="sh-reload" id="reloadBtn" title="Recharger les données">↻</button>
+  </nav>
 
-    <!-- Navigation principale -->
-    <nav class="nav" aria-label="Navigation principale">
-      <button class="nav-btn" data-view="scores">Scores</button>
-      <button class="nav-btn" data-view="standings">Classements</button>
-      <button class="nav-btn" data-view="teams">Équipes</button>
-      <button class="nav-btn" data-view="players">Joueurs</button>
-    </nav>
+  <!-- États globaux -->
+  <div id="globalStatus" class="sh-status" aria-live="polite"></div>
 
-    <!-- Contrôles de la vue Scores -->
-    <div id="score-controls" class="controls">
-      <label for="game-date">Date :</label>
-      <input type="date" id="game-date" />
-      <button id="today-btn" type="button">Aujourd’hui</button>
-    </div>
+  <!-- Sections -->
+  <main class="sh-main">
+    <section id="section-scores" class="sh-section" role="tabpanel" aria-labelledby="tab-scores"></section>
+    <!-- Barre de recherche -->
+<div class="sh-search">
+  <input type="text" id="playerSearch" placeholder="Rechercher un joueur..." />
+  <input type="text" id="teamSearch" placeholder="Rechercher une équipe..." />
 
-    <!-- Loader global -->
-    <div id="loader" class="loader hidden" aria-hidden="true" aria-live="polite">
-      <div class="spinner" role="status" aria-label="Chargement"></div>
-      <p>Chargement…</p>
-    </div>
+  <!-- Filtre par date -->
+  <input type="date" id="gameDate" />
+  <button id="filterDateBtn">Filtrer</button>
+</div>
 
-    <!-- === VUES === -->
-    <section id="scores" class="view" aria-live="polite"></section>
-    <section id="standings" class="view hidden"></section>
-    <section id="teams" class="view hidden"></section>
-    <section id="players" class="view hidden"></section>
 
-    <!-- Détails équipe / joueur -->
-    <section id="team-detail" class="detail hidden" aria-live="polite"></section>
-    <section id="player-detail" class="detail hidden" aria-live="polite"></section>
-
-    <!-- === Templates === -->
-    <template id="game-template">
-      <article class="game" role="group" aria-label="Match">
-        <div class="team team--away">
-          <img class="team-logo" alt="Logo équipe visiteur" width="72" height="72" loading="lazy" />
-          <span class="team-name"></span>
-        </div>
-        <div class="score"></div>
-        <div class="team team--home">
-          <img class="team-logo" alt="Logo équipe domicile" width="72" height="72" loading="lazy" />
-          <span class="team-name"></span>
-        </div>
-      </article>
-    </template>
-
-    <template id="team-card-template">
-      <article class="team-card" role="button" tabindex="0">
-        <img class="team-card-logo" alt="Logo équipe" width="80" height="80" loading="lazy" />
-        <h3 class="team-card-name"></h3>
-        <p class="team-card-meta"></p>
-      </article>
-    </template>
-
-    <template id="player-row-template">
-      <div class="player-row" role="button" tabindex="0">
-        <span class="player-name"></span>
-        <span class="player-meta"></span>
-      </div>
-    </template>
-
+<section id="section-teams" class="sh-section is-hidden" role="tabpanel" aria-labelledby="tab-teams"></section>
+    <section id="section-players" class="sh-section is-hidden" role="tabpanel" aria-labelledby="tab-players"></section>
   </main>
 
-  <script type="module" src="app.js"></script>
+  <footer class="sh-footer">
+    <small>© Sunset Hoops</small>
+  </footer>
 </body>
 </html>
