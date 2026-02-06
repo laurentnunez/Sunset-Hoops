@@ -258,17 +258,27 @@ function renderTeamsGrid(teams) {
   });
 }
 
+
 async function loadTeams() {
   setView("teams");
   showLoader();
   try {
-    renderTeamsGrid(await fetchTeams());
+    const teams = await fetchTeams();
+
+       const nbaTeams = teams.filter(t => {
+      const c = (t.conference || '').toLowerCase();
+      return c === 'east' || c === 'west';
+    });
+
+    renderTeamsGrid(nbaTeams);
   } catch (e) {
     renderErrorIn("teams", e);
   } finally {
     hideLoader();
   }
 }
+
+
 
 /* ====================================
    TEAM DETAIL + ROSTER
