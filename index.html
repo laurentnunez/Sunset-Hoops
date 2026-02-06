@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="fr">
 <head>
@@ -10,49 +11,71 @@
   <main class="container">
     <header class="header">
       <h1>Scores NBA</h1>
-      <p class="hint">Données : BallDontLie • Logos : SVG publics</p>
     </header>
 
-    <div class="controls">
+    <!-- Navigation principale -->
+    <nav class="nav" aria-label="Navigation principale">
+      <button class="nav-btn" data-view="scores">Scores</button>
+      <button class="nav-btn" data-view="standings">Classements</button>
+      <button class="nav-btn" data-view="teams">Équipes</button>
+      <button class="nav-btn" data-view="players">Joueurs</button>
+    </nav>
+
+    <!-- Contrôles de la vue Scores -->
+    <div id="score-controls" class="controls">
       <label for="game-date">Date :</label>
       <input type="date" id="game-date" />
       <button id="today-btn" type="button">Aujourd’hui</button>
     </div>
 
+    <!-- Loader global -->
     <div id="loader" class="loader hidden" aria-hidden="true" aria-live="polite">
       <div class="spinner" role="status" aria-label="Chargement"></div>
       <p>Chargement…</p>
     </div>
 
-    <section id="scores" class="scores" aria-live="polite"></section>
+    <!-- === VUES === -->
+    <section id="scores" class="view" aria-live="polite"></section>
+    <section id="standings" class="view hidden"></section>
+    <section id="teams" class="view hidden"></section>
+    <section id="players" class="view hidden"></section>
 
+    <!-- Détails équipe / joueur -->
+    <section id="team-detail" class="detail hidden" aria-live="polite"></section>
+    <section id="player-detail" class="detail hidden" aria-live="polite"></section>
+
+    <!-- === Templates === -->
     <template id="game-template">
       <article class="game" role="group" aria-label="Match">
         <div class="team team--away">
-          <img class="team-logo" alt="Logo équipe visiteur" width="36" height="36" loading="lazy" />
+          <img class="team-logo" alt="Logo équipe visiteur" width="72" height="72" loading="lazy" />
           <span class="team-name"></span>
         </div>
         <div class="score"></div>
         <div class="team team--home">
-          <img class="team-logo" alt="Logo équipe domicile" width="36" height="36" loading="lazy" />
+          <img class="team-logo" alt="Logo équipe domicile" width="72" height="72" loading="lazy" />
           <span class="team-name"></span>
         </div>
-        <div class="actions">
-          <button class="stats-btn" type="button">Voir les stats</button>
-        </div>
-        <div class="stats-panel hidden"></div>
       </article>
     </template>
+
+    <template id="team-card-template">
+      <article class="team-card" role="button" tabindex="0">
+        <img class="team-card-logo" alt="Logo équipe" width="80" height="80" loading="lazy" />
+        <h3 class="team-card-name"></h3>
+        <p class="team-card-meta"></p>
+      </article>
+    </template>
+
+    <template id="player-row-template">
+      <div class="player-row" role="button" tabindex="0">
+        <span class="player-name"></span>
+        <span class="player-meta"></span>
+      </div>
+    </template>
+
   </main>
 
-  <!-- IMPORTANT : type=module et src correct -->
   <script type="module" src="app.js"></script>
-
-  <!-- Trace globale des erreurs JS pour t'aider -->
-  <script>
-    window.onerror = function (msg, src, line, col, err) {
-      console.error("[GLOBAL ERROR]", msg, "at", src + ":" + line + ":" + col, err);
-    };
-  </script>
 </body>
 </html>
