@@ -407,15 +407,27 @@ async function showPlayerDetail(id) {
    INIT
    ==================================== */
 function init() {
-  document.querySelectorAll(".nav-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const view = btn.dataset.view;
-      if (view === "scores")      loadGames(document.getElementById("game-date").value);
-      else if (view === "standings") loadStandings();
-      else if (view === "teams")      loadTeams();
-      else if (view === "players")    loadPlayers();
-    });
+  
+document.querySelectorAll(".nav-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+
+    // --- effet bouton actif ---
+    document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    // --- ta logique existante ---
+    const view = btn.dataset.view;
+    if (view === "scores")
+      loadGames(document.getElementById("game-date").value);
+    else if (view === "standings")
+      loadStandings();
+    else if (view === "teams")
+      loadTeams();
+    else if (view === "players")
+      loadPlayers();
   });
+});
+
 
   const dateInput = document.getElementById("game-date");
   const todayBtn = document.getElementById("today-btn");
@@ -430,6 +442,7 @@ function init() {
   });
 
   dateInput.addEventListener("change", e => loadGames(e.target.value));
+  document.querySelector('.nav-btn[data-view="scores"]').classList.add("active");
 
   loadGames(today);
 }
