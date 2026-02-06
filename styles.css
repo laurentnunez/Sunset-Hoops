@@ -99,7 +99,7 @@ body {
 
 /* Team cards grid */
 #teams { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px }
-.team-card { display: flex; flex-direction: column; justify-items: center; gap: 8px; padding: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; cursor: pointer; box-shadow: var(--shadow); }
+.team-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; cursor: pointer; box-shadow: var(--shadow); }
 .team-card:hover { transform: translateY(-2px); transition: transform .15s ease; }
 .team-card-logo { width: 90px; height: 90px; object-fit: contain; background: #0003; border-radius: 12px; }
 .team-card-name { margin: 6px 0 0; font-size: 1.05rem; text-align: center; }
