@@ -95,7 +95,7 @@ async function fetchPlayers({ perPage = 100, teamId } = {}) {
 
 // === TheSportsDB: récupérer les classements NBA ===
 async function fetchNBAStandingsTSDB() {
-  const season = "2025-2026";  // saison actuelle
+  const season = "2021-2022";  // saison actuelle
   const url = `https://www.thesportsdb.com/api/v1/json/3/lookuptable.php?l=4387&s=${season}`;
 
   const res = await fetch(url);
