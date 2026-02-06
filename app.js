@@ -1,9 +1,11 @@
 // app.js
 import { NBA_LOGOS } from './logos.js';
 
-const API = 'https://www.balldontlie.io/api/v1';
+// ==== CONFIG API (nouvelle arborescence) ====
+const API_BASE = 'https://api.balldontlie.io';
+const NBA = '/nba/v1';
 const API_KEY = '433ab9b9-a787-4baa-9cb6-9871e4fcdf11';
-const HEADERS = { 'Authorization': API_KEY };
+const HEADERS = { 'Authorization': API_KEY }; // pas de "Bearer"
 
 // --- Utils ---
 function toLocalISODate(d = new Date()) {
@@ -12,10 +14,10 @@ function toLocalISODate(d = new Date()) {
 }
 
 function computeSeasonFromDate(dateString) {
-  const d = new Date(dateString + 'T00:00:00'); // safe parse
+  const d = new Date(dateString + 'T00:00:00');
   const y = d.getFullYear();
   const m = d.getMonth() + 1; // 1..12
-  // Saison NBA commence ~octobre : si oct (10) à déc (12) => saison = année courante, sinon année - 1
+  // Saison NBA démarre ~octobre → si mois >= 10, saison = année courante, sinon année - 1
   return m >= 10 ? y : y - 1;
 }
 
@@ -27,22 +29,29 @@ function enrichGamesWithLogos(games) {
   }));
 }
 
-// --- API calls ---
+// --- API calls (nouveaux endpoints /nba/v1/...) ---
 async function fetchGamesByDate(dateString) {
   const season = computeSeasonFromDate(dateString);
-  const url = `${API}/games?season=${season}&dates[]=${dateString}&per_page=100`;
+  // → On filtre à la saison en cours + la date sélectionnée
+  const url = `${API_BASE}${NBA}/games?dates[]=${dateString}&seasons[]=${season}&per_page=100`;
   const res = await fetch(url, { headers: HEADERS });
-  if (!res.ok) throw new Error(`Erreur API BallDontLie: ${res.status}`);
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    throw new Error(`Erreur API (games): ${res.status} ${txt}`);
+  }
   const json = await res.json();
   return json.data;
 }
 
 async function fetchStatsByGameId(gameId) {
-  const url = `${API}/stats?game_ids[]=${gameId}&per_page=100`;
+  const url = `${API_BASE}${NBA}/stats?game_ids[]=${gameId}&per_page=100`;
   const res = await fetch(url, { headers: HEADERS });
-  if (!res.ok) throw new Error(`Erreur chargement stats: ${res.status}`);
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    throw new Error(`Erreur API (stats): ${res.status} ${txt}`);
+  }
   const json = await res.json();
-  return json.data; // liste des stats par joueur
+  return json.data; // stats par joueur pour ce match
 }
 
 // --- UI helpers ---
@@ -173,3 +182,27 @@ function renderStatsPanel(panel, stats, game) {
     </table>
     <div class="team-title" style="margin-top:8px;">${game.home_team.full_name} — Totaux: PTS ${homeTotals.pts}, REB ${homeTotals.reb}, AST ${homeTotals.ast}</div>
     <table>
+      <thead><tr><th>Joueur</th><th>PTS</th><th>REB</th><th>AST</th></tr></thead>
+      <tbody>
+        ${homeTop.map(p => `<tr><td>${p.name}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.ast}</td></tr>`).join('')}
+      </tbody>
+    </table>
+  `;
+  panel.classList.remove('hidden');
+}
+
+// --- Lifecycle ---
+async function loadGames(dateString) {
+  showLoader();
+  try {
+    const games = await fetchGamesByDate(dateString);
+    const enriched = enrichGamesWithLogos(games);
+    hideLoader();
+    renderScores(enriched);
+  } catch (e) {
+    hideLoader();
+    renderError(e);
+  }
+}
+
+function init() {
