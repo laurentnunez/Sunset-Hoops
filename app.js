@@ -301,6 +301,9 @@ async function showTeamDetail(team) {
           <div class="title">${t.full_name}</div>
           <div class="sub">${t.city} / ${t.conference} / ${t.division}</div>
         </div>
+	<button id="back-teams" class="nav-btn" style="margin-top:10px;">
+        Retour
+      </button>
       </div>
 
       <div class="section-title">Effectif</div>
