@@ -249,7 +249,7 @@ function renderTeamsGrid(teams) {
     const node = tpl.content.cloneNode(true);
     node.querySelector(".team-card-logo").src = logo(t.abbreviation);
     node.querySelector(".team-card-name").textContent = t.full_name;
-    node.querySelector(".team-card-meta").textContent = `${t.city} • ${t.conference} / ${t.division}`;
+    node.querySelector(".team-card-meta").textContent = `${t.conference} / ${t.division}`;
 
     const card = node.querySelector(".team-card");
     card.addEventListener("click", () => showTeamDetail(t));
