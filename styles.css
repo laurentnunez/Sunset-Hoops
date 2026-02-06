@@ -54,11 +54,12 @@ body {
   padding: clamp(10px, 1.2vw, 16px);
   background: var(--card); border: 1px solid var(--border); border-radius: 12px;
 }
-.team { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.team { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
 .team--away { justify-content: flex-end; }
 .team--home { justify-content: flex-start; }
 .team-logo { width: clamp(56px, 7vw, 84px); height: clamp(56px, 7vw, 84px); object-fit: contain; background: #0003; border-radius: 10px; }
-.team-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+.team-name { text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+ }
 .score { font-weight: 900; color: var(--accent); text-align: center; font-size: clamp(1.6rem, 3.5vw, 2.6rem); min-width: 110px; }
 
 /* Team cards grid */
