@@ -1,3 +1,4 @@
+
 // app.js
 import { NBA_LOGOS } from "./logos.js";
 
@@ -8,8 +9,7 @@ const API_BASE = "https://api.balldontlie.io";
 const NBA = "/nba/v1";
 
 const API_KEY = "433ab9b9-a787-4baa-9cb6-9871e4fcdf11";
-const HEADERS = { Authorization: API_KEY }; // pas de Bearer selon la doc BDL
-
+const HEADERS = { Authorization: API_KEY }; // pas de Bearer selon la doc
 
 /* =============== UTILS ================== */
 function toLocalISODate(d = new Date()) {
@@ -28,20 +28,15 @@ function setView(viewId) {
   const views = ["scores", "standings", "teams", "players", "team-detail", "player-detail"];
   views.forEach(v => document.getElementById(v).classList.add("hidden"));
   document.getElementById(viewId).classList.remove("hidden");
-
-  // Contrôles visibles uniquement pour les scores
   document.getElementById("score-controls").classList.toggle("hidden", viewId !== "scores");
 }
 
 const logo = abbr => NBA_LOGOS[abbr] || "";
 
-
 /* =============== API CALLS ================== */
-
 async function fetchGamesByDate(dateString) {
   const season = computeSeasonFromDate(dateString);
   const url = `${API_BASE}${NBA}/games?dates[]=${dateString}&seasons[]=${season}&per_page=100`;
-
   const res = await fetch(url, { headers: HEADERS });
   if (!res.ok) throw new Error(`Erreur API games: ${res.status}`);
   return (await res.json()).data;
@@ -58,7 +53,6 @@ async function fetchPlayers({ perPage = 100, teamId } = {}) {
   const params = new URLSearchParams();
   params.set("per_page", perPage);
   if (teamId) params.append("team_ids[]", teamId);
-
   const url = `${API_BASE}${NBA}/players?${params}`;
   const res = await fetch(url, { headers: HEADERS });
   if (!res.ok) throw new Error(`Erreur API players: ${res.status}`);
@@ -86,7 +80,6 @@ async function fetchPlayerById(id) {
   return await res.json();
 }
 
-
 /* =============== LOADER + ERRORS ================== */
 function showLoader() {
   const el = document.getElementById("loader");
@@ -104,11 +97,9 @@ function renderErrorIn(id, err) {
   document.getElementById(id).innerHTML = `<p class="error">${err.message}</p>`;
 }
 
-
 /* ====================================
    SCORES
    ==================================== */
-
 function enrichGamesWithLogos(g) {
   return g.map(m => ({
     ...m,
@@ -123,7 +114,6 @@ function renderScores(games) {
     c.innerHTML = `<p class="empty">Aucun match trouvé.</p>`;
     return;
   }
-
   const tpl = document.getElementById("game-template");
   c.innerHTML = "";
 
@@ -151,8 +141,7 @@ function renderScores(games) {
     homeName.addEventListener("click", () => showTeamDetail(g.home_team));
 
     // SCORE
-    node.querySelector(".score").textContent =
-      `${g.visitor_team_score} - ${g.home_team_score}`;
+    node.querySelector(".score").textContent = `${g.visitor_team_score} - ${g.home_team_score}`;
 
     c.appendChild(node);
   });
@@ -171,11 +160,9 @@ async function loadGames(dateString) {
   }
 }
 
-
 /* ====================================
    STANDINGS
    ==================================== */
-
 function renderStandings(data) {
   const c = document.getElementById("standings");
 
@@ -190,12 +177,14 @@ function renderStandings(data) {
   data.data.forEach(t => {
     const team = t.team || t;
     const conf = (t.conference || team.conference || "").toLowerCase();
+
     const o = {
       name: team.full_name,
       abbr: team.abbreviation,
       wins: t.wins ?? "?",
       losses: t.losses ?? "?"
     };
+
     if (conf.startsWith("e")) east.push(o);
     else west.push(o);
   });
@@ -248,11 +237,9 @@ async function loadStandings() {
   }
 }
 
-
 /* ====================================
    TEAMS
    ==================================== */
-
 function renderTeamsGrid(teams) {
   const c = document.getElementById("teams");
   const tpl = document.getElementById("team-card-template");
@@ -262,11 +249,11 @@ function renderTeamsGrid(teams) {
     const node = tpl.content.cloneNode(true);
     node.querySelector(".team-card-logo").src = logo(t.abbreviation);
     node.querySelector(".team-card-name").textContent = t.full_name;
-    node.querySelector(".team-card-meta").textContent =
-      `${t.city} • ${t.conference} / ${t.division}`;
+    node.querySelector(".team-card-meta").textContent = `${t.city} • ${t.conference} / ${t.division}`;
 
     const card = node.querySelector(".team-card");
     card.addEventListener("click", () => showTeamDetail(t));
+
     c.appendChild(node);
   });
 }
@@ -283,19 +270,17 @@ async function loadTeams() {
   }
 }
 
-
 /* ====================================
    TEAM DETAIL + ROSTER
    ==================================== */
-
 async function showTeamDetail(team) {
   setView("team-detail");
   showLoader();
 
   try {
     const t = team.id ? team : (await fetchTeamById(team)).data;
-
     const container = document.getElementById("team-detail");
+
     const playersResp = await fetchPlayers({ teamId: t.id });
     const players = playersResp.data;
 
@@ -337,11 +322,9 @@ async function showTeamDetail(team) {
   }
 }
 
-
 /* ====================================
    PLAYERS LIST + PLAYER DETAIL
    ==================================== */
-
 async function loadPlayers() {
   setView("players");
   showLoader();
@@ -356,10 +339,8 @@ async function loadPlayers() {
 
     players.forEach(p => {
       const node = tpl.content.cloneNode(true);
-      node.querySelector(".player-name").textContent =
-        `${p.first_name} ${p.last_name}`;
-      node.querySelector(".player-meta").textContent =
-        `${p.team?.full_name || "—"} • ${p.position || "?"}`;
+      node.querySelector(".player-name").textContent = `${p.first_name} ${p.last_name}`;
+      node.querySelector(".player-meta").textContent = `${p.team?.full_name || "—"} • ${p.position || "?"}`;
 
       node.querySelector(".player-row")
         .addEventListener("click", () => showPlayerDetail(p.id));
@@ -374,11 +355,10 @@ async function loadPlayers() {
   }
 }
 
-
-
 async function showPlayerDetail(id) {
   setView("player-detail");
   showLoader();
+
   try {
     const resp = await fetchPlayerById(id);
     const p = resp.data;
@@ -390,19 +370,15 @@ async function showPlayerDetail(id) {
       <h2>${p.first_name} ${p.last_name}</h2>
 
       <div class="detail-grid">
-        <div><strong>Équipe :</strong> 
+        <div><strong>Équipe :</strong>
           <button class="linklike" id="player-team-btn">
             ${team?.full_name || "—"}
           </button>
         </div>
 
         <div><strong>Poste :</strong> ${p.position || "?"}</div>
-        <div><strong>Taille :</strong> 
-          ${p.height_feet ? `${p.height_feet}'${p.height_inches}"` : "?"}
-        </div>
-        <div><strong>Poids :</strong> 
-          ${p.weight_pounds ? `${p.weight_pounds} lbs` : "?"}
-        </div>
+        <div><strong>Taille :</strong> ${p.height_feet ? `${p.height_feet}'${p.height_inches}"` : "?"}</div>
+        <div><strong>Poids :</strong> ${p.weight_pounds ? `${p.weight_pounds} lbs` : "?"}</div>
       </div>
 
       <button id="back-players" class="nav-btn" style="margin-top:10px;">
@@ -427,19 +403,17 @@ async function showPlayerDetail(id) {
   }
 }
 
-
 /* ====================================
    INIT
    ==================================== */
-
 function init() {
   document.querySelectorAll(".nav-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const view = btn.dataset.view;
-      if      (view === "scores")    loadGames(document.getElementById("game-date").value);
+      if (view === "scores")      loadGames(document.getElementById("game-date").value);
       else if (view === "standings") loadStandings();
-      else if (view === "teams")     loadTeams();
-      else if (view === "players")   loadPlayers();
+      else if (view === "teams")      loadTeams();
+      else if (view === "players")    loadPlayers();
     });
   });
 
@@ -457,13 +431,12 @@ function init() {
 
   dateInput.addEventListener("change", e => loadGames(e.target.value));
 
-  // Première vue
   loadGames(today);
 }
 
 init();
 
-/* Global error catcher */
+// Global error catcher
 window.onerror = function (m, s, l, c, e) {
   console.error("[GLOBAL ERROR]", m, s, l, c, e);
 };
