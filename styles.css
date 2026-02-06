@@ -115,7 +115,7 @@ body {
 /* Details */
 .detail { margin-top: 8px; padding: 16px; background: #0c1219; border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); }
 .detail h2 { margin-top: 0; }
-.detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.detail-grid { display: flex; flex-direction: column;  }
 .detail .section-title { color: var(--muted); margin: 12px 0 8px; font-weight: 700; }
 .roster { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
 .roster .player-row { cursor: pointer; }

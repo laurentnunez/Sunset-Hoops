@@ -299,9 +299,8 @@ async function showTeamDetail(team) {
         <img src="${logo(t.abbreviation)}" alt="${t.full_name}" />
         <div>
           <div class="title">${t.full_name}</div>
-          <div class="sub">${t.city} • ${t.conference} / ${t.division}</div>
+          <div class="sub">${t.city} / ${t.conference} / ${t.division}</div>
         </div>
-        <button id="back-teams" class="nav-btn">Retour</button>
       </div>
 
       <div class="section-title">Effectif</div>
