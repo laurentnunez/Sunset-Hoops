@@ -1,360 +1,469 @@
 // app.js
-import { NBA_LOGOS } from './logos.js';
+import { NBA_LOGOS } from "./logos.js";
 
-// ==== CONFIG API (nouvelle arborescence) ====
-const API_BASE = 'https://api.balldontlie.io';
-const NBA = '/nba/v1';
-const API_KEY = '433ab9b9-a787-4baa-9cb6-9871e4fcdf11';
-const HEADERS = { 'Authorization': API_KEY }; // pas de "Bearer"
+/* ============================================
+   CONFIG API (BallDontLie nouvelle arborescence)
+   ============================================ */
+const API_BASE = "https://api.balldontlie.io";
+const NBA = "/nba/v1";
 
-// --- Utils ---
+const API_KEY = "433ab9b9-a787-4baa-9cb6-9871e4fcdf11";
+const HEADERS = { Authorization: API_KEY }; // pas de Bearer selon la doc BDL
+
+
+/* =============== UTILS ================== */
 function toLocalISODate(d = new Date()) {
   const tzo = d.getTimezoneOffset() * 60000;
   return new Date(d.getTime() - tzo).toISOString().slice(0, 10);
 }
+
 function computeSeasonFromDate(dateString) {
-  const d = new Date(dateString + 'T00:00:00');
+  const d = new Date(dateString + "T00:00:00");
   const y = d.getFullYear();
   const m = d.getMonth() + 1;
-  return m >= 10 ? y : y - 1; // saison = année de début (ex. 2025 pour 2025-26)
-}
-function setView(viewId) {
-  // Vues principales
-  ['scores','standings','teams','players'].forEach(id => {
-    document.getElementById(id).classList.add('hidden');
-  });
-  // Détails
-  ['team-detail','player-detail'].forEach(id => {
-    document.getElementById(id).classList.add('hidden');
-  });
-  document.getElementById(viewId).classList.remove('hidden');
-  // Contrôles date visibles seulement pour scores
-  document.getElementById('score-controls').classList.toggle('hidden', viewId !== 'scores');
-}
-function getLogo(abbr) {
-  return NBA_LOGOS[abbr] || '';
+  return m >= 10 ? y : y - 1;
 }
 
-// --- API calls ---
+function setView(viewId) {
+  const views = ["scores", "standings", "teams", "players", "team-detail", "player-detail"];
+  views.forEach(v => document.getElementById(v).classList.add("hidden"));
+  document.getElementById(viewId).classList.remove("hidden");
+
+  // Contrôles visibles uniquement pour les scores
+  document.getElementById("score-controls").classList.toggle("hidden", viewId !== "scores");
+}
+
+const logo = abbr => NBA_LOGOS[abbr] || "";
+
+
+/* =============== API CALLS ================== */
+
 async function fetchGamesByDate(dateString) {
   const season = computeSeasonFromDate(dateString);
   const url = `${API_BASE}${NBA}/games?dates[]=${dateString}&seasons[]=${season}&per_page=100`;
+
   const res = await fetch(url, { headers: HEADERS });
-  if (!res.ok) throw new Error(`Erreur API (games): ${res.status}`);
-  const json = await res.json();
-  return json.data;
+  if (!res.ok) throw new Error(`Erreur API games: ${res.status}`);
+  return (await res.json()).data;
 }
+
 async function fetchTeams() {
   const url = `${API_BASE}${NBA}/teams?per_page=100`;
   const res = await fetch(url, { headers: HEADERS });
-  if (!res.ok) throw new Error(`Erreur API (teams): ${res.status}`);
-  const json = await res.json();
-  return json.data;
+  if (!res.ok) throw new Error(`Erreur API teams: ${res.status}`);
+  return (await res.json()).data;
 }
-async function fetchPlayers({ cursor, perPage = 100, teamId } = {}) {
+
+async function fetchPlayers({ perPage = 100, teamId } = {}) {
   const params = new URLSearchParams();
-  params.set('per_page', perPage);
-  if (cursor) params.set('cursor', cursor);
-  if (teamId) params.append('team_ids[]', teamId);
-  const url = `${API_BASE}${NBA}/players?${params.toString()}`;
+  params.set("per_page", perPage);
+  if (teamId) params.append("team_ids[]", teamId);
+
+  const url = `${API_BASE}${NBA}/players?${params}`;
   const res = await fetch(url, { headers: HEADERS });
-  if (!res.ok) throw new Error(`Erreur API (players): ${res.status}`);
-  return res.json(); // { data, meta: { next_cursor } }
+  if (!res.ok) throw new Error(`Erreur API players: ${res.status}`);
+  return await res.json(); // { data, meta }
 }
+
 async function fetchStandings() {
-  const url = `${API_BASE}${NBA}/standings?per_page=100`;
+  const url = `${API_BASE}${NBA}/standings`;
   const res = await fetch(url, { headers: HEADERS });
-  // Selon le plan, standings peut ne pas être dispo → on gère proprement
   if (!res.ok) throw new Error(`Standings indisponibles (status ${res.status})`);
-  return res.json(); // { data: [...] }
+  return await res.json();
 }
+
 async function fetchTeamById(id) {
   const url = `${API_BASE}${NBA}/teams/${id}`;
   const res = await fetch(url, { headers: HEADERS });
-  if (!res.ok) throw new Error(`Erreur API (team): ${res.status}`);
-  return res.json(); // { data: {...} }
+  if (!res.ok) throw new Error(`Erreur API team: ${res.status}`);
+  return await res.json();
 }
+
 async function fetchPlayerById(id) {
   const url = `${API_BASE}${NBA}/players/${id}`;
   const res = await fetch(url, { headers: HEADERS });
-  if (!res.ok) throw new Error(`Erreur API (player): ${res.status}`);
-  return res.json(); // { data: {...} }
+  if (!res.ok) throw new Error(`Erreur API player: ${res.status}`);
+  return await res.json();
 }
 
-// --- Loader & Errors ---
+
+/* =============== LOADER + ERRORS ================== */
 function showLoader() {
-  const el = document.getElementById('loader');
-  el.classList.remove('hidden');
-  el.setAttribute('aria-hidden', 'false');
-}
-function hideLoader() {
-  const el = document.getElementById('loader');
-  el.classList.add('hidden');
-  el.setAttribute('aria-hidden', 'true');
-}
-function renderErrorIn(containerId, err) {
-  const c = document.getElementById(containerId);
-  c.innerHTML = `<p class="error">${err.message}</p>`;
+  const el = document.getElementById("loader");
+  el.classList.remove("hidden");
+  el.setAttribute("aria-hidden", "false");
 }
 
-// --- SCORES ---
-function enrichGamesWithLogos(games) {
-  return games.map((g) => ({
-    ...g,
-    homeLogo: getLogo(g.home_team?.abbreviation),
-    visitorLogo: getLogo(g.visitor_team?.abbreviation),
+function hideLoader() {
+  const el = document.getElementById("loader");
+  el.classList.add("hidden");
+  el.setAttribute("aria-hidden", "true");
+}
+
+function renderErrorIn(id, err) {
+  document.getElementById(id).innerHTML = `<p class="error">${err.message}</p>`;
+}
+
+
+/* ====================================
+   SCORES
+   ==================================== */
+
+function enrichGamesWithLogos(g) {
+  return g.map(m => ({
+    ...m,
+    homeLogo: logo(m.home_team?.abbreviation),
+    visitorLogo: logo(m.visitor_team?.abbreviation)
   }));
 }
+
 function renderScores(games) {
-  const container = document.getElementById('scores');
+  const c = document.getElementById("scores");
   if (!games.length) {
-    container.innerHTML = `<p class="empty">Aucun match trouvé à cette date.</p>`;
+    c.innerHTML = `<p class="empty">Aucun match trouvé.</p>`;
     return;
   }
-  const tpl = document.getElementById('game-template');
-  container.innerHTML = '';
-  games.forEach((g) => {
+
+  const tpl = document.getElementById("game-template");
+  c.innerHTML = "";
+
+  games.forEach(g => {
     const node = tpl.content.cloneNode(true);
-    const away = node.querySelector('.team--away');
-    const home = node.querySelector('.team--home');
-    const score = node.querySelector('.score');
 
-    const awayLogo = away.querySelector('.team-logo');
-    const awayName = away.querySelector('.team-name');
-    awayLogo.src = g.visitorLogo || '';
-    awayLogo.alt = `${g.visitor_team.full_name} logo`;
+    // AWAY
+    const away = node.querySelector(".team--away");
+    const awayLogo = away.querySelector(".team-logo");
+    const awayName = away.querySelector(".team-name");
+
+    awayLogo.src = g.visitorLogo;
     awayName.textContent = g.visitor_team.full_name;
+    awayLogo.addEventListener("click", () => showTeamDetail(g.visitor_team));
+    awayName.addEventListener("click", () => showTeamDetail(g.visitor_team));
 
-    const homeLogo = home.querySelector('.team-logo');
-    const homeName = home.querySelector('.team-name');
-    homeLogo.src = g.homeLogo || '';
-    homeLogo.alt = `${g.home_team.full_name} logo`;
+    // HOME
+    const home = node.querySelector(".team--home");
+    const homeLogo = home.querySelector(".team-logo");
+    const homeName = home.querySelector(".team-name");
+
+    homeLogo.src = g.homeLogo;
     homeName.textContent = g.home_team.full_name;
+    homeLogo.addEventListener("click", () => showTeamDetail(g.home_team));
+    homeName.addEventListener("click", () => showTeamDetail(g.home_team));
 
-    score.textContent = `${g.visitor_team_score} - ${g.home_team_score}`;
+    // SCORE
+    node.querySelector(".score").textContent =
+      `${g.visitor_team_score} - ${g.home_team_score}`;
 
-    // Accès rapide à la fiche équipe en cliquant sur le nom/logo
-    [awayLogo, awayName].forEach(el => el.addEventListener('click', () => showTeamDetail(g.visitor_team)));
-    [homeLogo, homeName].forEach(el => el.addEventListener('click', () => showTeamDetail(g.home_team)));
-
-    container.appendChild(node);
+    c.appendChild(node);
   });
 }
+
 async function loadGames(dateString) {
-  setView('scores');
+  setView("scores");
   showLoader();
   try {
     const games = await fetchGamesByDate(dateString);
-    const enriched = enrichGamesWithLogos(games);
-    renderScores(enriched);
+    renderScores(enrichGamesWithLogos(games));
   } catch (e) {
-    renderErrorIn('scores', e);
+    renderErrorIn("scores", e);
   } finally {
     hideLoader();
   }
 }
 
-// --- STANDINGS ---
+
+/* ====================================
+   STANDINGS
+   ==================================== */
+
 function renderStandings(data) {
-  const container = document.getElementById('standings');
-  if (!data?.data?.length) {
-    container.innerHTML = `<p class="empty">Classements indisponibles.</p>`;
+  const c = document.getElementById("standings");
+
+  if (!data?.data) {
+    c.innerHTML = `<p class="empty">Classements indisponibles.</p>`;
     return;
   }
 
-  // Essai de groupement par conférence (selon structure des données)
   const east = [];
   const west = [];
-  for (const row of data.data) {
-    const team = row.team || row; // fallback
-    const conference = row.conference || team.conference || '';
-    const wins = row.wins ?? row.win ?? row.record?.wins ?? '?';
-    const losses = row.losses ?? row.loss ?? row.record?.losses ?? '?';
-    const name = team.full_name || team.name || 'Équipe';
-    const abbr = team.abbreviation || '';
-    const obj = { name, abbr, wins, losses };
-    if (String(conference).toLowerCase().startsWith('e')) east.push(obj);
-    else if (String(conference).toLowerCase().startsWith('w')) west.push(obj);
-    else east.push(obj); // fallback
+
+  data.data.forEach(t => {
+    const team = t.team || t;
+    const conf = (t.conference || team.conference || "").toLowerCase();
+    const o = {
+      name: team.full_name,
+      abbr: team.abbreviation,
+      wins: t.wins ?? "?",
+      losses: t.losses ?? "?"
+    };
+    if (conf.startsWith("e")) east.push(o);
+    else west.push(o);
+  });
+
+  function table(title, arr) {
+    return `
+      <div>
+        <h3>${title}</h3>
+        <table class="table">
+          <thead><tr><th>#</th><th>Équipe</th><th>Bilan</th></tr></thead>
+          <tbody>
+            ${arr.map((t, i) => `
+              <tr>
+                <td>${i + 1}</td>
+                <td><button class="linklike" data-team="${t.abbr}">${t.name}</button></td>
+                <td>${t.wins}-${t.losses}</td>
+              </tr>`).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
   }
 
-  const renderTable = (title, arr) => `
-    <div>
-      <h3>${title}</h3>
-      <table class="table">
-        <thead><tr><th>#</th><th>Équipe</th><th>Bilan</th></tr></thead>
-        <tbody>
-          ${arr.map((t, i) => `
-            <tr>
-              <td>${i+1}</td>
-              <td><button class="linklike" data-team-abbr="${t.abbr}">${t.name}</button></td>
-              <td>${t.wins}-${t.losses}</td>
-            </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>`.trim();
-
-  container.innerHTML = `
+  c.innerHTML = `
     <div class="standings-grid">
-      ${renderTable('Conférence Est', east)}
-      ${renderTable('Conférence Ouest', west)}
+      ${table("Conférence Est", east)}
+      ${table("Conférence Ouest", west)}
     </div>
   `;
 
-  // clic sur équipe -> fiche équipe
-  container.querySelectorAll('button.linklike').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const abbr = btn.dataset.teamAbbr;
-      // retrouver l'équipe via /teams
+  c.querySelectorAll("button[data-team]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const abbr = btn.dataset.team;
       const teams = await fetchTeams();
-      const team = teams.find(t => t.abbreviation === abbr) || teams.find(t => (t.abbreviation||'').toLowerCase()===abbr.toLowerCase());
-      if (team) showTeamDetail(team);
+      const t = teams.find(x => x.abbreviation === abbr);
+      if (t) showTeamDetail(t);
     });
   });
 }
+
 async function loadStandings() {
-  setView('standings');
+  setView("standings");
   showLoader();
   try {
-    const data = await fetchStandings();
-    renderStandings(data);
+    renderStandings(await fetchStandings());
   } catch (e) {
-    renderErrorIn('standings', e);
+    renderErrorIn("standings", e);
   } finally {
     hideLoader();
   }
 }
 
-// --- TEAMS ---
+
+/* ====================================
+   TEAMS
+   ==================================== */
+
 function renderTeamsGrid(teams) {
-  const container = document.getElementById('teams');
-  container.innerHTML = '';
-  const tpl = document.getElementById('team-card-template');
+  const c = document.getElementById("teams");
+  const tpl = document.getElementById("team-card-template");
+  c.innerHTML = "";
 
   teams.forEach(t => {
     const node = tpl.content.cloneNode(true);
-    const logo = node.querySelector('.team-card-logo');
-    const name = node.querySelector('.team-card-name');
-    const meta = node.querySelector('.team-card-meta');
-    const card = node.querySelector('.team-card');
+    node.querySelector(".team-card-logo").src = logo(t.abbreviation);
+    node.querySelector(".team-card-name").textContent = t.full_name;
+    node.querySelector(".team-card-meta").textContent =
+      `${t.city} • ${t.conference} / ${t.division}`;
 
-    logo.src = getLogo(t.abbreviation);
-    logo.alt = `${t.full_name} logo`;
-    name.textContent = t.full_name;
-    meta.textContent = `${t.city} • ${t.conference} / ${t.division}`;
-
-    card.addEventListener('click', () => showTeamDetail(t));
-    card.addEventListener('keypress', (e) => e.key === 'Enter' && showTeamDetail(t));
-
-    container.appendChild(node);
+    const card = node.querySelector(".team-card");
+    card.addEventListener("click", () => showTeamDetail(t));
+    c.appendChild(node);
   });
 }
+
 async function loadTeams() {
-  setView('teams');
+  setView("teams");
   showLoader();
   try {
-    const teams = await fetchTeams();
-    renderTeamsGrid(teams);
+    renderTeamsGrid(await fetchTeams());
   } catch (e) {
-    renderErrorIn('teams', e);
+    renderErrorIn("teams", e);
   } finally {
     hideLoader();
   }
 }
 
-// --- TEAM DETAIL + ROSTER ---
-async function showTeamDetail(team) {
-  setView('team-detail');
-  showLoader();
-  try {
-    // rafraîchir team si on a juste un id
-    const t = team.id ? team : (await fetchTeamById(team)).data;
-    const container = document.getElementById('team-detail');
 
-    // Roster : joueurs par équipe (per_page=100 suffit)
-    const playersResp = await fetchPlayers({ teamId: t.id, perPage: 100 });
-    const players = playersResp.data || [];
+/* ====================================
+   TEAM DETAIL + ROSTER
+   ==================================== */
+
+async function showTeamDetail(team) {
+  setView("team-detail");
+  showLoader();
+
+  try {
+    const t = team.id ? team : (await fetchTeamById(team)).data;
+
+    const container = document.getElementById("team-detail");
+    const playersResp = await fetchPlayers({ teamId: t.id });
+    const players = playersResp.data;
 
     container.innerHTML = `
       <div class="team-hero">
-        <img src="${getLogo(t.abbreviation)}" alt="${t.full_name} logo" />
+        <img src="${logo(t.abbreviation)}" alt="${t.full_name}" />
         <div>
           <div class="title">${t.full_name}</div>
           <div class="sub">${t.city} • ${t.conference} / ${t.division}</div>
         </div>
-        <div><button id="back-to-teams" class="nav-btn">← Retour aux équipes</button></div>
+        <button id="back-teams" class="nav-btn">Retour</button>
       </div>
 
       <div class="section-title">Effectif</div>
-      <div class="roster" id="team-roster"></div>
+      <div class="roster"></div>
     `;
 
-    document.getElementById('back-to-teams').addEventListener('click', () => setView('teams'));
+    document.getElementById("back-teams")
+      .addEventListener("click", () => setView("teams"));
 
-    const rosterEl = document.getElementById('team-roster');
-    rosterEl.innerHTML = '';
+    const r = container.querySelector(".roster");
+    r.innerHTML = "";
 
     players.forEach(p => {
-      const row = document.createElement('div');
-      row.className = 'player-row';
+      const row = document.createElement("div");
+      row.className = "player-row";
       row.innerHTML = `
         <span class="player-name">${p.first_name} ${p.last_name}</span>
-        <span class="player-meta">${p.position || '?'}${p.height ? ' • ' + p.height + 'cm' : ''}</span>
+        <span class="player-meta">${p.position || "?"}</span>
       `;
-      row.addEventListener('click', () => showPlayerDetail(p.id));
-      row.addEventListener('keypress', (e) => e.key === 'Enter' && showPlayerDetail(p.id));
-      rosterEl.appendChild(row);
+      row.addEventListener("click", () => showPlayerDetail(p.id));
+      r.appendChild(row);
     });
 
   } catch (e) {
-    renderErrorIn('team-detail', e);
+    renderErrorIn("team-detail", e);
   } finally {
     hideLoader();
   }
 }
 
-// --- PLAYERS LIST ---
+
+/* ====================================
+   PLAYERS LIST + PLAYER DETAIL
+   ==================================== */
+
 async function loadPlayers() {
-  setView('players');
+  setView("players");
   showLoader();
-  try {
-    const resp = await fetchPlayers({ perPage: 100 }); // première page
-    const container = document.getElementById('players');
-    container.innerHTML = '';
 
-    (resp.data || []).forEach(p => {
-      const row = document.getElementById('player-row-template').content.cloneNode(true);
-      const el = row.querySelector('.player-row');
-      row.querySelector('.player-name').textContent = `${p.first_name} ${p.last_name}`;
-      const tName = p.team?.full_name || p.team?.name || '';
-      row.querySelector('.player-meta').textContent = [tName, p.position || ''].filter(Boolean).join(' • ');
-      el.addEventListener('click', () => showPlayerDetail(p.id));
-      el.addEventListener('keypress', (e) => e.key === 'Enter' && showPlayerDetail(p.id));
-      container.appendChild(row);
+  try {
+    const resp = await fetchPlayers({ perPage: 100 });
+    const players = resp.data;
+    const container = document.getElementById("players");
+
+    container.innerHTML = "";
+    const tpl = document.getElementById("player-row-template");
+
+    players.forEach(p => {
+      const node = tpl.content.cloneNode(true);
+      node.querySelector(".player-name").textContent =
+        `${p.first_name} ${p.last_name}`;
+      node.querySelector(".player-meta").textContent =
+        `${p.team?.full_name || "—"} • ${p.position || "?"}`;
+
+      node.querySelector(".player-row")
+        .addEventListener("click", () => showPlayerDetail(p.id));
+
+      container.appendChild(node);
     });
 
-    // TODO: on pourra ajouter un bouton "Plus" si besoin (cursor)
   } catch (e) {
-    renderErrorIn('players', e);
+    renderErrorIn("players", e);
   } finally {
     hideLoader();
   }
 }
 
-// --- PLAYER DETAIL ---
-async function showPlayerDetail(playerId) {
-  setView('player-detail');
+
+
+async function showPlayerDetail(id) {
+  setView("player-detail");
   showLoader();
   try {
-    const resp = await fetchPlayerById(playerId);
+    const resp = await fetchPlayerById(id);
     const p = resp.data;
-    const container = document.getElementById('player-detail');
 
-    const teamName = p.team?.full_name || p.team?.name || '—';
-    const teamAbbr = p.team?.abbreviation || '';
-    const pos = p.position || '—';
-    const height = p.height || (p.height_feet ? `${p.height_feet}'${p.height_inches || ''}` : '—');
-    const weight = p.weight || (p.weight_pounds ? `${p.weight_pounds} lbs` : '—');
+    const c = document.getElementById("player-detail");
+    const team = p.team;
 
-    container.innerHTML = `
+    c.innerHTML = `
       <h2>${p.first_name} ${p.last_name}</h2>
+
+      <div class="detail-grid">
+        <div><strong>Équipe :</strong> 
+          <button class="linklike" id="player-team-btn">
+            ${team?.full_name || "—"}
+          </button>
+        </div>
+
+        <div><strong>Poste :</strong> ${p.position || "?"}</div>
+        <div><strong>Taille :</strong> 
+          ${p.height_feet ? `${p.height_feet}'${p.height_inches}"` : "?"}
+        </div>
+        <div><strong>Poids :</strong> 
+          ${p.weight_pounds ? `${p.weight_pounds} lbs` : "?"}
+        </div>
+      </div>
+
+      <button id="back-players" class="nav-btn" style="margin-top:10px;">
+        Retour
+      </button>
+    `;
+
+    document.getElementById("back-players")
+      .addEventListener("click", () => setView("players"));
+
+    document.getElementById("player-team-btn")
+      .addEventListener("click", async () => {
+        const teams = await fetchTeams();
+        const t = teams.find(x => x.id === team?.id);
+        if (t) showTeamDetail(t);
+      });
+
+  } catch (e) {
+    renderErrorIn("player-detail", e);
+  } finally {
+    hideLoader();
+  }
+}
+
+
+/* ====================================
+   INIT
+   ==================================== */
+
+function init() {
+  document.querySelectorAll(".nav-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const view = btn.dataset.view;
+      if      (view === "scores")    loadGames(document.getElementById("game-date").value);
+      else if (view === "standings") loadStandings();
+      else if (view === "teams")     loadTeams();
+      else if (view === "players")   loadPlayers();
+    });
+  });
+
+  const dateInput = document.getElementById("game-date");
+  const todayBtn = document.getElementById("today-btn");
+
+  const today = toLocalISODate();
+  dateInput.value = today;
+
+  todayBtn.addEventListener("click", () => {
+    const t = toLocalISODate();
+    dateInput.value = t;
+    loadGames(t);
+  });
+
+  dateInput.addEventListener("change", e => loadGames(e.target.value));
+
+  // Première vue
+  loadGames(today);
+}
+
+init();
+
+/* Global error catcher */
+window.onerror = function (m, s, l, c, e) {
+  console.error("[GLOBAL ERROR]", m, s, l, c, e);
+};
